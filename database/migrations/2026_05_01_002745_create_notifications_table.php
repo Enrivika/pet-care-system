@@ -6,22 +6,24 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::create('notifications', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->foreignId('pet_id')->constrained('pets')->cascadeOnDelete();
-            $table->foreignId('event_id')->nullable()->constrained('calendar_events')->cascadeOnDelete();
-            $table->enum('type', ['push', 'email']);
-            $table->string('title');
-            $table->text('body');
-            $table->timestamp('sent_at')->useCurrent();
+            $table->uuid('id')->primary();
+            $table->string('type');
+            $table->morphs('notifiable');
+            $table->text('data');
             $table->timestamp('read_at')->nullable();
             $table->timestamps();
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('notifications');
