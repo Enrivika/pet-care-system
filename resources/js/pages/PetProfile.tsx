@@ -1,14 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
+import { fetchAllTasks } from '../store/slices/calendarEventsSlice';
+import AddTaskModal from '../components/AddTaskModal';
+import EditTaskModal from '../components/EditTaskModal';
+import CompleteTaskModal from '../components/CompleteTaskModal';
+import ViewTaskModal from '../components/ViewTaskModal';
+import { toast } from 'sonner';
 
 const PetProfile = () => {
   const { id } = useParams<{ id: string }>();
+  const dispatch = useDispatch();
+
   const { pets } = useSelector((state: RootState) => state.pets);
+  const { events } = useSelector((state: RootState) => state.calendarEvents);
+
   const pet = pets.find(p => p.id === Number(id));
 
-  const [activeTab, setActiveTab] = useState<'info' | 'health' | 'history' | 'schedule' | 'expenses'>('info');
+  const [activeTab, setActiveTab] = useState<'tasks' | 'history'>('tasks');
+
+  // Модалки
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<any>(null);
+
+  // Загружаем задачи при открытии профиля
+  useEffect(() => {
+    dispatch(fetchAllTasks() as any);
+  }, [dispatch]);
 
   if (!pet) {
     return (
@@ -19,116 +41,175 @@ const PetProfile = () => {
     );
   }
 
-  const tabs = [
-    { id: 'info', label: 'Инфо', icon: '📋' },
-    { id: 'health', label: 'Здоровье', icon: '💊' },
-    { id: 'history', label: 'История', icon: '📜' },
-    { id: 'schedule', label: 'Расписание', icon: '📅' },
-    { id: 'expenses', label: 'Расходы', icon: '💰' },
-  ];
+  // Фильтруем задачи этого питомца
+  const petTasks = events.filter((task: any) => task.pet_id === pet.id);
+  const upcomingTasks = petTasks.filter((t: any) => !t.is_completed);
+  const historyTasks = petTasks.filter((t: any) => t.is_completed);
+
+  const handleEditTask = (task: any) => {
+    setSelectedTask(task);
+    if (task.is_completed) {
+      setShowViewModal(true);
+    } else {
+      setShowEditModal(true);
+    }
+  };
+
+  const handleCompleteTask = (task: any) => {
+    setSelectedTask(task);
+    setShowCompleteModal(true);
+  };
 
   return (
     <div className="p-8">
       <div className="max-w-5xl mx-auto">
         {/* Шапка профиля */}
         <div className="flex items-center gap-6 mb-8">
-          <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center text-5xl">
-            {pet.species === 'cat' ? '🐱' : pet.species === 'dog' ? '🐶' : pet.species === 'bird' ? '🐦' : '🐾'}
+          <div className="w-28 h-28 bg-emerald-100 rounded-3xl overflow-hidden border-4 border-white shadow-md flex-shrink-0">
+            <img 
+              src={pet.photo_url || `https://picsum.photos/id/${pet.id}/200/200`} 
+              alt={pet.name}
+              className="w-full h-full object-cover"
+            />
           </div>
-          <div>
-            <h1 className="text-4xl font-bold">{pet.name}</h1>
-            <p className="text-xl text-gray-600">{pet.breed || pet.species}</p>
-            <p className="text-sm text-gray-500 mt-1">ID: {pet.id}</p>
+
+          <div className="flex-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-4xl font-bold">{pet.name}</h1>
+              <span className="px-4 py-1 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-full">
+                {pet.species === 'cat' ? '🐱 Кошка' : pet.species === 'dog' ? '🐶 Собака' : '🐾 Питомец'}
+              </span>
+            </div>
+            
+            <p className="text-xl text-gray-600 mt-1">{pet.breed || 'Порода не указана'}</p>
+            
+            <div className="flex items-center gap-4 mt-3">
+              <div className="text-sm text-gray-500">
+                Возраст: <span className="font-medium text-gray-700">{pet.birth_date ? 
+                  `${new Date().getFullYear() - new Date(pet.birth_date).getFullYear()} лет` : 'Не указан'}</span>
+              </div>
+              
+              <div className="px-3 py-1 bg-emerald-500 text-white text-xs font-medium rounded-full">
+                {upcomingTasks.length > 0 ? 'Есть задачи!' : 'Задач нет'}
+              </div>
+            </div>
           </div>
+
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="px-5 py-2.5 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 flex items-center gap-2"
+          >
+            + Добавить задачу
+          </button>
         </div>
 
-        {/* Вкладки */}
+        {/* Вкладки (только 2) */}
         <div className="flex border-b mb-6">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-6 py-3 font-medium flex items-center gap-2 border-b-2 transition-colors ${
-                activeTab === tab.id 
-                  ? 'border-emerald-500 text-emerald-600' 
-                  : 'border-transparent text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <span>{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
+          <button
+            onClick={() => setActiveTab('tasks')}
+            className={`px-8 py-3 font-medium border-b-2 transition-colors flex items-center gap-2 ${
+              activeTab === 'tasks' 
+                ? 'border-emerald-500 text-emerald-600' 
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Задачи ({upcomingTasks.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-8 py-3 font-medium border-b-2 transition-colors flex items-center gap-2 ${
+              activeTab === 'history' 
+                ? 'border-emerald-500 text-emerald-600' 
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            История ({historyTasks.length})
+          </button>
         </div>
 
         {/* Контент вкладок */}
-        <div className="bg-white rounded-2xl p-8 border shadow-sm min-h-[400px]">
-          {activeTab === 'info' && (
+        <div className="bg-white rounded-2xl border shadow-sm min-h-[500px]">
+          {activeTab === 'tasks' && (
             <div>
-              <h2 className="text-2xl font-semibold mb-6">Основная информация</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-6 border-b flex justify-between items-center">
                 <div>
-                  <div className="text-sm text-gray-500">Имя</div>
-                  <div className="text-lg font-medium">{pet.name}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Вид</div>
-                  <div className="text-lg font-medium">{pet.species}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Порода</div>
-                  <div className="text-lg font-medium">{pet.breed || 'Не указана'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Дата рождения</div>
-                  <div className="text-lg font-medium">{pet.birth_date || 'Не указана'}</div>
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Вес</div>
-                  <div className="text-lg font-medium">{pet.weight ? `${pet.weight} кг` : 'Не указан'}</div>
+                  <h2 className="text-xl font-semibold">Предстоящие задачи</h2>
+                  <p className="text-gray-600 text-sm">Всего: {upcomingTasks.length}</p>
                 </div>
               </div>
-            </div>
-          )}
 
-          {activeTab === 'health' && (
-            <div>
-              <h2 className="text-2xl font-semibold mb-6">Здоровье и медицинские данные</h2>
-              <div className="text-gray-600">
-                <p>Здесь будет информация об аллергиях, хронических заболеваниях, прививках и текущем статусе здоровья.</p>
-                <div className="mt-8 p-6 bg-gray-50 rounded-xl">
-                  <p className="text-sm text-gray-500">Статус: <span className="text-green-600 font-medium">Здоров</span></p>
+              {upcomingTasks.length > 0 ? (
+                <div className="divide-y">
+                  {upcomingTasks.map((task: any) => (
+                    <div key={task.id} className="p-5 flex items-center justify-between hover:bg-gray-50">
+                      <div className="flex items-center gap-4">
+                        <div className="text-3xl">
+                          {task.event_type === 'Кормление' ? '🍽️' : 
+                           task.event_type === 'Поение' ? '💧' : 
+                           task.event_type === 'Укол' ? '💉' : '📋'}
+                        </div>
+                        <div>
+                          <div className="font-medium">{task.title}</div>
+                          <div className="text-sm text-gray-500">
+                            {new Date(task.start_at).toLocaleDateString('ru-RU')} в {new Date(task.start_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleCompleteTask(task)} className="px-4 py-1.5 text-sm bg-emerald-100 text-emerald-700 rounded-xl hover:bg-emerald-200">
+                          Выполнить
+                        </button>
+                        <button onClick={() => handleEditTask(task)} className="px-3 py-1.5 text-sm border rounded-xl hover:bg-gray-50">
+                          ✏️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
+              ) : (
+                <div className="p-12 text-center text-gray-500">
+                  У питомца пока нет предстоящих задач
+                </div>
+              )}
             </div>
           )}
 
           {activeTab === 'history' && (
             <div>
-              <h2 className="text-2xl font-semibold mb-6">История событий</h2>
-              <div className="text-gray-600">
-                <p>Здесь будет хронология всех медицинских событий: прививки, визиты к ветеринару, болезни, операции.</p>
-                <div className="mt-6 text-sm text-gray-500">Пока нет записей в истории.</div>
+              <div className="p-6 border-b">
+                <h2 className="text-xl font-semibold">История выполненных задач</h2>
+                <p className="text-gray-600 text-sm">Всего выполнено: {historyTasks.length}</p>
               </div>
-            </div>
-          )}
 
-          {activeTab === 'schedule' && (
-            <div>
-              <h2 className="text-2xl font-semibold mb-6">Индивидуальное расписание</h2>
-              <div className="text-gray-600">
-                <p>Здесь будет индивидуальное расписание кормления, прогулок и процедур для этого питомца.</p>
-                <div className="mt-6 text-sm text-gray-500">Расписание ещё не настроено.</div>
-              </div>
-            </div>
-          )}
+              {historyTasks.length > 0 ? (
+                <div className="divide-y">
+                  {historyTasks.map((task: any) => (
+                    <div key={task.id} className="p-5 flex items-center justify-between hover:bg-gray-50">
+                      <div className="flex items-center gap-4">
+                        <div className="text-3xl opacity-70">✅</div>
+                        <div>
+                          <div className="font-medium">{task.title}</div>
+                          <div className="text-sm text-gray-500">
+                            Выполнено: {task.completed_at ? new Date(task.completed_at).toLocaleDateString('ru-RU') : ''}
+                          </div>
+                        </div>
+                      </div>
 
-          {activeTab === 'expenses' && (
-            <div>
-              <h2 className="text-2xl font-semibold mb-6">Расходы на питомца</h2>
-              <div className="text-gray-600">
-                <p>Здесь будет статистика трат именно на этого питомца (корм, ветеринария, аксессуары).</p>
-                <div className="mt-6 text-sm text-gray-500">Пока нет данных о расходах.</div>
-              </div>
+                      <button 
+                        onClick={() => handleEditTask(task)} 
+                        className="px-4 py-1.5 text-sm bg-emerald-100 text-emerald-700 rounded-xl hover:bg-emerald-200"
+                      >
+                        Просмотр
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-12 text-center text-gray-500">
+                  Пока нет выполненных задач
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -139,6 +220,32 @@ const PetProfile = () => {
           </Link>
         </div>
       </div>
+
+      {/* Модальные окна */}
+      <AddTaskModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} />
+      
+      <EditTaskModal 
+        isOpen={showEditModal} 
+        onClose={() => { setShowEditModal(false); setSelectedTask(null); }} 
+        task={selectedTask} 
+      />
+      
+      <CompleteTaskModal 
+        isOpen={showCompleteModal} 
+        onClose={() => { setShowCompleteModal(false); setSelectedTask(null); }} 
+        task={selectedTask} 
+      />
+      
+      <ViewTaskModal 
+        isOpen={showViewModal} 
+        onClose={() => { setShowViewModal(false); setSelectedTask(null); }} 
+        task={selectedTask} 
+        onEdit={(task) => {
+          setShowViewModal(false);
+          setSelectedTask(task);
+          setShowEditModal(true);
+        }}
+      />
     </div>
   );
 };

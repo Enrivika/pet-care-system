@@ -1,19 +1,20 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
-import Register from './pages/Register';
+import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
 import Pets from './pages/Pets';
 import Calendar from './pages/Calendar';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import PetProfile from './pages/PetProfile';
+import HealthRecords from './pages/HealthRecords';
 
 function App() {
   return (
     <Routes>
       {/* Публичные страницы */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Auth />} />
+      <Route path="/register" element={<Auth />} />
+      <Route path="/auth" element={<Auth />} />
 
       {/* Защищённые страницы с Layout */}
       <Route path="/dashboard" element={
@@ -49,6 +50,14 @@ function App() {
       } />
 
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      
+      <Route path="/health" element={
+        <ProtectedRoute>
+          <Layout>
+            <HealthRecords />
+          </Layout>
+        </ProtectedRoute>
+      } />
     </Routes>
   );
 }

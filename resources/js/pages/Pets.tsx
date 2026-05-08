@@ -1,87 +1,179 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchPets, createPet, deletePet } from '../store/slices/petsSlice';
+import { fetchPets, createPet, deletePet, updatePet } from '../store/slices/petsSlice';
+import { fetchAllTasks } from '../store/slices/calendarEventsSlice';
 import { RootState } from '../store';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
+import DeletePetModal from '../components/DeletePetModal';
+import PetProfileModal from '../components/PetProfileModal';
+import EditPetModal from '../components/EditPetModal';
 
 const Pets = () => {
   const dispatch = useDispatch();
   const { pets, isLoading, error } = useSelector((state: RootState) => state.pets);
-  
-  const [showModal, setShowModal] = useState(false);
+  const { events } = useSelector((state: RootState) => state.calendarEvents);
+
+  const [showAddModal, setShowAddModal] = useState(false);
   const [petName, setPetName] = useState('');
-  const [petSpecies, setPetSpecies] = useState('cat');
-  const [petBreed, setPetBreed] = useState('');
-  
+  const [petAge, setPetAge] = useState('');
+  const [petPhoto, setPetPhoto] = useState<File | null>(null);
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterSpecies, setFilterSpecies] = useState('all');
+
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPet, setEditingPet] = useState<any>(null);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [petToDelete, setPetToDelete] = useState<{ id: number; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const [selectedPetForProfile, setSelectedPetForProfile] = useState<any>(null);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
+  const [showEditPetModal, setShowEditPetModal] = useState(false);
+  const [editingPetFromProfile, setEditingPetFromProfile] = useState<any>(null);
+
+  const [isAdding, setIsAdding] = useState(false);
+
+  const formatAge = (age: number | null | undefined): string => {
+    if (!age || age <= 0) return '';
+
+    const lastDigit = age % 10;
+    const lastTwoDigits = age % 100;
+
+    // Исключения 11–19 (всегда "лет")
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+      return `${age} лет`;
+    }
+
+    if (lastDigit === 1) {
+      return `${age} год`;
+    } else if (lastDigit >= 2 && lastDigit <= 4) {
+      return `${age} года`;
+    } else {
+      return `${age} лет`;
+    }
+  };
+
+  // Загрузка данных
+  useEffect(() => {
+    dispatch(fetchPets() as any);
+    dispatch(fetchAllTasks() as any);
+  }, [dispatch]);
+
+  const filteredPets = pets.filter(pet =>
+    pet.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const hasUpcomingTasks = (petId: number) => {
+    return events.some((task: any) => task.pet_id === petId && !task.is_completed);
+  };
+
+  // === Добавление питомца ===
+  const handleAddPet = async () => {
+    if (!petName.trim() || isAdding) return;
+
+    setIsAdding(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('name', petName);
+      if (petAge) formData.append('age', petAge);
+      if (petPhoto) formData.append('photo', petPhoto);
+
+      await dispatch(createPet(formData) as any).unwrap();
+
+      toast.success(`Питомец "${petName}" успешно добавлен!`);
+      setShowAddModal(false);
+      setPetName('');
+      setPetAge('');
+      setPetPhoto(null);
+      dispatch(fetchPets() as any);
+    } catch (err: any) {
+      toast.error(err || 'Ошибка добавления питомца');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  // === Редактирование питомца (из списка) ===
   const handleEditPet = (pet: any) => {
-    setEditingPet({...pet});
+    setEditingPet({ ...pet });
     setShowEditModal(true);
   };
 
   const handleUpdatePet = async () => {
     if (!editingPet) return;
 
+    toast.success(`Питомец "${editingPet.name}" обновлён!`);
+    setShowEditModal(false);
+    setEditingPet(null);
+    dispatch(fetchPets() as any);
+  };
+
+  // === Редактирование питомца ИЗ ПРОФИЛЯ ===
+  const handleEditPetFromProfile = (pet: any) => {
+    setEditingPetFromProfile(pet);
+    setShowEditPetModal(true);
+  };
+
+  const handleSavePetFromProfile = async (updatedPet: any) => {
     try {
-      // Здесь позже будет API-запрос на обновление
-      toast.success(`Питомец "${editingPet.name}" обновлён!`);
-      setShowEditModal(false);
-      setEditingPet(null);
+      const formData = new FormData();
+      formData.append('name', updatedPet.name);
+      if (updatedPet.age) formData.append('age', updatedPet.age);
+      if (updatedPet.photo) formData.append('photo', updatedPet.photo);
+
+      // Получаем свежие данные из ответа бэкенда
+      const result = await dispatch(updatePet({ 
+        petId: updatedPet.id, 
+        formData 
+      }) as any).unwrap();
+
+      toast.success(`Питомец "${updatedPet.name}" обновлён!`);
+
+      // Обновляем открытый попап профиля сразу
+      setSelectedPetForProfile(result);
+
       dispatch(fetchPets() as any);
     } catch (err: any) {
       toast.error(err || 'Ошибка обновления питомца');
     }
-  };  
+  };
 
-  useEffect(() => {
-    dispatch(fetchPets() as any);
-  }, [dispatch]);
+  // === Удаление питомца ===
+  const openDeleteModal = (petId: number, petName: string) => {
+    setPetToDelete({ id: petId, name: petName });
+    setShowDeleteModal(true);
+  };
 
-  // Фильтрация и поиск
-  const filteredPets = pets
-    .filter(pet => 
-      pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (pet.breed && pet.breed.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
-    .filter(pet => filterSpecies === 'all' || pet.species === filterSpecies);
+  const confirmDeletePet = async () => {
+    if (!petToDelete) return;
 
-  const handleAddPet = async () => {
-    if (!petName.trim()) {
-      toast.error('Введите имя питомца');
-      return;
-    }
+    setIsDeleting(true);
 
     try {
-      await dispatch(createPet({
-        name: petName,
-        species: petSpecies,
-        breed: petBreed || null,
-      }) as any).unwrap();
-
-      toast.success(`Питомец "${petName}" успешно добавлен!`);
-      setShowModal(false);
-      setPetName('');
-      setPetBreed('');
-      dispatch(fetchPets() as any);
+      await dispatch(deletePet(petToDelete.id) as any).unwrap();
+      toast.success(`Питомец "${petToDelete.name}" удалён`);
+      setShowDeleteModal(false);
+      setPetToDelete(null);
     } catch (err: any) {
-      toast.error(err || 'Ошибка добавления питомца');
+      toast.error(err || 'Ошибка удаления питомца');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  const handleDeletePet = async (petId: number, petName: string) => {
-    if (!confirm(`Удалить питомца "${petName}"?`)) return;
+  // Векторная графика
+  const getPetAvatar = (pet: any) => {
+    if (pet.photo_url) return pet.photo_url;
+    return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='90' fill='%23E8F5E9'/%3E%3Cpath d='M70 80 Q100 60 130 80' fill='none' stroke='%234CAF50' stroke-width='8'/%3E%3Ccircle cx='80' cy='95' r='8' fill='%234CAF50'/%3E%3Ccircle cx='120' cy='95' r='8' fill='%234CAF50'/%3E%3Cpath d='M85 115 Q100 130 115 115' fill='none' stroke='%234CAF50' stroke-width='6'/%3E%3C/svg%3E`;
+  };
 
-    try {
-      await dispatch(deletePet(petId) as any).unwrap();
-      toast.success(`Питомец "${petName}" удалён`);
-    } catch (err: any) {
-      toast.error(err || 'Ошибка удаления питомца');
-    }
+  // Открытие профиля питомца в попапе
+  const openPetProfile = (pet: any) => {
+    setSelectedPetForProfile(pet);
+    setShowProfileModal(true);
   };
 
   return (
@@ -92,208 +184,195 @@ const Pets = () => {
             <h1 className="text-4xl font-bold text-gray-900">Мои питомцы</h1>
             <p className="text-gray-600 mt-1">Управляйте профилями своих любимцев</p>
           </div>
-          
-          <button 
-            onClick={() => setShowModal(true)}
+
+          <button
+            onClick={() => setShowAddModal(true)}
             className="px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 flex items-center gap-2"
           >
             + Добавить питомца
           </button>
         </div>
 
-        {/* Поиск и фильтры */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+        {/* Поиск */}
+        <div className="mb-6">
           <input
             type="text"
-            placeholder="Поиск по имени или породе..."
+            placeholder="Поиск питомца по имени..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full max-w-md px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
-          
-          <select 
-            value={filterSpecies} 
-            onChange={(e) => setFilterSpecies(e.target.value)}
-            className="px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          >
-            <option value="all">Все виды</option>
-            <option value="cat">Кошки</option>
-            <option value="dog">Собаки</option>
-            <option value="bird">Птицы</option>
-            <option value="other">Другое</option>
-          </select>
         </div>
 
         {isLoading && <div className="text-center py-12">Загрузка...</div>}
-
         {error && <div className="text-red-500 text-center py-12">{error}</div>}
 
         {!isLoading && filteredPets.length === 0 && (
           <div className="bg-white rounded-2xl p-12 text-center border">
             <div className="text-6xl mb-4">🐱🐶</div>
             <h3 className="text-2xl font-semibold mb-2">Питомцы не найдены</h3>
-            <p className="text-gray-600 mb-6">Попробуйте изменить параметры поиска</p>
           </div>
         )}
 
+        {/* Карточки питомцев */}
         {!isLoading && filteredPets.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredPets.map((pet: any) => (
-              <div key={pet.id} className="bg-white rounded-2xl p-6 border shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-3xl">
-                    {pet.species === 'cat' ? '🐱' : pet.species === 'dog' ? '🐶' : pet.species === 'bird' ? '🐦' : '🐾'}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold">{pet.name}</h3>
-                    <p className="text-gray-600">{pet.breed || pet.species}</p>
-                  </div>
-                </div>
+            {filteredPets.map((pet: any) => {
+              const hasTasks = hasUpcomingTasks(pet.id);
 
-                <div className="flex gap-2 mt-4">
-                  <Link 
-                    to={`/pets/${pet.id}`}
-                    className="flex-1 py-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 text-sm text-center"
+              return (
+                <div
+                  key={pet.id}
+                  onClick={() => openPetProfile(pet)}
+                  className="bg-white rounded-3xl p-6 border shadow-sm hover:shadow-lg transition-all cursor-pointer relative group"
+                >
+                  <div className="flex justify-center mb-4">
+                    <div className="w-32 h-32 rounded-3xl overflow-hidden border-4 border-white shadow-md">
+                      <img
+                        src={getPetAvatar(pet)}
+                        alt={pet.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="text-center mb-3">
+                    <h3 className="text-2xl font-bold">{pet.name}</h3>
+                    <p className="text-gray-600 mt-1">
+                      {formatAge(pet.age) || 'Возраст не указан'}
+                    </p>
+                  </div>
+
+                  <div className="flex justify-center">
+                    {hasTasks ? (
+                      <span className="px-4 py-1 bg-emerald-500 text-white text-sm font-medium rounded-full">
+                        Есть задача!
+                      </span>
+                    ) : (
+                      <span className="px-4 py-1 bg-gray-200 text-gray-600 text-sm font-medium rounded-full">
+                        Задач нет
+                      </span>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openDeleteModal(pet.id, pet.name);
+                    }}
+                    className="absolute top-4 right-4 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600"
                   >
-                    Подробнее
-                  </Link>
-                  
-                  <button 
-                    onClick={() => handleEditPet(pet)}
-                    className="flex-1 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 text-sm"
-                  >
-                    Редактировать
-                  </button>
-                  
-                  <button 
-                    onClick={() => handleDeletePet(pet.id, pet.name)}
-                    className="flex-1 py-2 bg-red-500 text-white rounded-xl hover:bg-red-600 text-sm"
-                  >
-                    Удалить
+                    🗑️
                   </button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Модальное окно добавления питомца */}
-      {showModal && (
+      {/* Модалка добавления питомца */}
+      {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl w-full max-w-md p-8">
-            <h2 className="text-2xl font-bold mb-6">Добавить питомца</h2>
-            
-            <div className="space-y-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-8">
+            <h2 className="text-2xl font-bold text-center mb-6">Добавление питомца</h2>
+
+            <div className="space-y-5">
               <div>
                 <label className="block text-sm font-medium mb-2">Имя питомца *</label>
                 <input
                   type="text"
                   value={petName}
                   onChange={(e) => setPetName(e.target.value)}
-                  className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder="Мурка"
+                  className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Введите имя питомца..."
+                  required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Вид животного</label>
-                <select 
-                  value={petSpecies} 
-                  onChange={(e) => setPetSpecies(e.target.value)}
-                  className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="cat">Кошка</option>
-                  <option value="dog">Собака</option>
-                  <option value="bird">Птица</option>
-                  <option value="other">Другое</option>
-                </select>
+                <label className="block text-sm font-medium mb-2">Возраст</label>
+                <input
+                  type="number"
+                  value={petAge}
+                  onChange={(e) => setPetAge(e.target.value)}
+                  className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  placeholder="Введите возраст питомца..."
+                />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Порода (необязательно)</label>
+                <label className="block text-sm font-medium mb-2">Загрузить фото</label>
                 <input
-                  type="text"
-                  value={petBreed}
-                  onChange={(e) => setPetBreed(e.target.value)}
-                  className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  placeholder="Британская короткошёртная"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setPetPhoto(e.target.files?.[0] || null)}
+                  className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
             </div>
 
             <div className="flex gap-4 mt-8">
-              <button 
-                onClick={() => setShowModal(false)}
-                className="flex-1 py-3 border border-gray-300 rounded-xl hover:bg-gray-50"
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="flex-1 py-3 border border-gray-300 rounded-2xl hover:bg-gray-50"
               >
                 Отмена
               </button>
-              <button 
+              <button
                 onClick={handleAddPet}
-                className="flex-1 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600"
+                disabled={isAdding}                    
+                className="flex-1 py-3 bg-emerald-500 text-white rounded-2xl hover:bg-emerald-600 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Добавить питомца
+                {isAdding ? 'Добавление...' : 'Добавить питомца'}
               </button>
             </div>
           </div>
         </div>
       )}
-      {/* Модальное окно редактирования питомца */}
+
+      {/* Модалка редактирования питомца (из списка) */}
       {showEditModal && editingPet && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl w-full max-w-md p-8">
-            <h2 className="text-2xl font-bold mb-6">Редактировать питомца</h2>
-            
-            <div className="space-y-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-8">
+            <h2 className="text-2xl font-bold text-center mb-6">Редактирование питомца</h2>
+
+            <div className="space-y-5">
               <div>
                 <label className="block text-sm font-medium mb-2">Имя питомца *</label>
                 <input
                   type="text"
                   value={editingPet.name}
-                  onChange={(e) => setEditingPet({...editingPet, name: e.target.value})}
-                  className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  onChange={(e) => setEditingPet({ ...editingPet, name: e.target.value })}
+                  className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Вид животного</label>
-                <select 
-                  value={editingPet.species} 
-                  onChange={(e) => setEditingPet({...editingPet, species: e.target.value})}
-                  className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="cat">Кошка</option>
-                  <option value="dog">Собака</option>
-                  <option value="bird">Птица</option>
-                  <option value="other">Другое</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Порода</label>
+                <label className="block text-sm font-medium mb-2">Возраст</label>
                 <input
-                  type="text"
-                  value={editingPet.breed || ''}
-                  onChange={(e) => setEditingPet({...editingPet, breed: e.target.value})}
-                  className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  type="number"
+                  value={editingPet.age || ''}
+                  onChange={(e) => setEditingPet({ ...editingPet, age: e.target.value })}
+                  className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
             </div>
 
             <div className="flex gap-4 mt-8">
-              <button 
+              <button
                 onClick={() => {
                   setShowEditModal(false);
                   setEditingPet(null);
                 }}
-                className="flex-1 py-3 border border-gray-300 rounded-xl hover:bg-gray-50"
+                className="flex-1 py-3 border border-gray-300 rounded-2xl hover:bg-gray-50"
               >
                 Отмена
               </button>
-              <button 
+              <button
                 onClick={handleUpdatePet}
-                className="flex-1 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600"
+                className="flex-1 py-3 bg-emerald-500 text-white rounded-2xl hover:bg-emerald-600"
               >
                 Сохранить изменения
               </button>
@@ -301,6 +380,34 @@ const Pets = () => {
           </div>
         </div>
       )}
+
+      {/* Модалка удаления питомца */}
+      <DeletePetModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setPetToDelete(null);
+        }}
+        petName={petToDelete?.name || ''}
+        onConfirm={confirmDeletePet}
+        isLoading={isDeleting}
+      />
+
+      {/* Попап профиля питомца */}
+      <PetProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        pet={selectedPetForProfile}
+        onEditPet={handleEditPetFromProfile} 
+      />
+
+      {/* Попап редактирования питомца */}
+      <EditPetModal
+        isOpen={showEditPetModal}
+        onClose={() => setShowEditPetModal(false)}
+        pet={editingPetFromProfile}
+        onSave={handleSavePetFromProfile}
+      />
     </div>
   );
 };

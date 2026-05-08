@@ -23,6 +23,7 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
   const [isMedical, setIsMedical] = useState(false);
   const [reminder, setReminder] = useState('none');
   const [recurrence, setRecurrence] = useState('none');
+  const [isAllDay, setIsAllDay] = useState(false);
 
   const isCompleted = task?.is_completed;
 
@@ -49,7 +50,8 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
       setPetId(task.pet_id?.toString() || '');
       setCategory(task.event_type || '');
       setTitle(task.title || '');
-      setNotes(task.notes || '');
+      setNotes(task.notes || ''); 
+      setIsAllDay(task.is_all_day || false);
 
       // Автоматически определяем isMedical
       const isMed = medicalCategories.includes(task.event_type) || task.is_medical;
@@ -70,7 +72,11 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
         setTime('00:00');
       }
 
-      setReminder(task.reminder_minutes ? task.reminder_minutes.toString() : 'none');
+      setReminder(
+        task.reminder_minutes != null 
+          ? task.reminder_minutes.toString() 
+          : 'none'
+      );
       setRecurrence(task.recurrence_rule || 'none');
     }
   }, [task, isOpen]);
@@ -88,27 +94,28 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
   };
 
   const handleSubmit = async () => {
-    if (!title.trim()) {
-      toast.error('Название задачи обязательно');
-      return;
-    }
 
     const startAt = time 
       ? `${date}T${time}:00` 
       : `${date}T00:00:00`;
 
+    const safeTitle = title ? String(title).trim() : '';
+
     const taskData: any = {
       pet_id: parseInt(petId),
-      title: title.trim(),
+      title: safeTitle,
       event_type: category,
       start_at: startAt,
       is_medical: medicalCategories.includes(category) || (category === 'Другое' && isMedical),
+      is_all_day: isAllDay,
     };
 
     if (isCompleted) {
       taskData.notes = notes.trim() || null;
-    } else {
-      taskData.reminder_minutes = reminder !== 'none' ? parseInt(reminder) : null;
+    } else {      
+      if (reminder !== 'none') {
+        taskData.reminder_minutes = parseInt(reminder);
+      }
       taskData.recurrence_rule = recurrence !== 'none' ? recurrence : null;
     }
 
@@ -137,7 +144,7 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
           <div className="flex items-center gap-4 mb-6">
             <div className="w-16 h-16 rounded-2xl overflow-hidden border-4 border-white shadow-md flex-shrink-0">
               <img 
-                src={task.pet?.photo || "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=200"} 
+                src={task.pet?.photo_url || task.pet?.photo || "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=200"} 
                 alt={task.pet?.name || 'Питомец'} 
                 className="w-full h-full object-cover"
               />
@@ -150,7 +157,7 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
 
           {/* Название задачи */}
           <div className="mb-5">
-            <label className="block text-sm font-medium mb-2">Название задачи *</label>
+            <label className="block text-sm font-medium mb-2">Название задачи</label>
             <input
               type="text"
               value={title}
@@ -218,23 +225,41 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                max={isCompleted ? new Date().toISOString().split('T')[0] : undefined}
                 className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 required
               />
-              {isCompleted && (
-                <p className="text-xs text-gray-500 mt-1">Только прошедшая дата</p>
-              )}
             </div>
+            
             <div>
               <label className="block text-sm font-medium mb-2">Время</label>
               <input
                 type="time"
-                value={time}
+                value={isAllDay ? '' : time}
                 onChange={(e) => setTime(e.target.value)}
-                className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                disabled={isAllDay}
+                placeholder="--:--"
+                className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100"
               />
             </div>
+            
+            {/* Чекбокс "На весь день" */}
+            <div className="flex items-center gap-2 mt-2 mb-5 col-span-2">
+              <input 
+                type="checkbox" 
+                id="isAllDay"
+                checked={isAllDay}
+                onChange={(e) => {
+                  setIsAllDay(e.target.checked);
+                  if (e.target.checked) {
+                    setTime('');
+                  }
+                }}
+                className="w-4 h-4 accent-emerald-500"
+              />
+              <label htmlFor="isAllDay" className="text-sm text-gray-600">
+                На весь день (без времени)
+              </label>
+            </div>            
           </div>
 
           {/* Напоминание и Повтор (только для обычных задач) */}

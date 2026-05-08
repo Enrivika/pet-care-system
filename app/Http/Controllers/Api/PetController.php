@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Pet;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class PetController extends Controller
 {
@@ -14,23 +16,41 @@ class PetController extends Controller
         return response()->json($pets);
     }
 
-public function store(Request $request)
-{
-    $validated = $request->validate([
-        'name' => 'required|string',
-        'species' => 'required|string',
-        'breed' => 'nullable|string',
-        'birth_date' => 'nullable|date',
-        'photo_url' => 'nullable|string',
-        'weight' => 'nullable|numeric',
-        'notes' => 'nullable|string',
-    ]);
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'species' => 'nullable|string',
+            'breed' => 'nullable|string',
+            'age' => 'nullable|integer|min:0|max:200',
+            'photo' => 'nullable|image|max:2048',
+            'weight' => 'nullable|numeric',
+            'notes' => 'nullable|string',
+        ]);
 
-    // Автоматическая привязка питомца к текущему пользователю
-    $pet = auth()->user()->pets()->create($validated);
+        $birthDate = null;
+        if ($request->filled('age')) {
+            $birthDate = Carbon::now()->subYears($request->age)->format('Y-m-d');
+        }
+        
+        $photoUrl = null;
+        if ($request->hasFile('photo')) {
+            $path = $request->file('photo')->store('pets', 'public');
+            $photoUrl = Storage::url($path);
+        }
 
-    return response()->json($pet, 201);
-}
+        $pet = auth()->user()->pets()->create([
+            'name' => $validated['name'],
+            'species' => $validated['species'] ?? 'other',
+            'breed' => $validated['breed'] ?? null,
+            'birth_date' => $birthDate,
+            'photo_url' => $photoUrl,
+            'weight' => $validated['weight'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        return response()->json($pet, 201);
+    }
 
     public function show(Pet $pet)
     {
@@ -42,7 +62,38 @@ public function store(Request $request)
     {
         $this->authorize('update', $pet);
 
-        $pet->update($request->all());
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'age' => 'nullable|integer|min:0|max:200',
+            'photo' => 'nullable|image|max:2048',
+        ]);
+
+        $data = [];
+
+        // Имя
+        if ($request->filled('name')) {
+            $data['name'] = $request->name;
+        }
+
+        // Возраст → birth_date
+        if ($request->filled('age')) {
+            $data['birth_date'] = Carbon::now()->subYears($request->age)->format('Y-m-d');
+        }
+
+        // Фото
+        if ($request->hasFile('photo')) {
+            // Удаляем старое фото
+            if ($pet->photo_url) {
+                $oldPath = str_replace('/storage/', '', $pet->photo_url);
+                Storage::disk('public')->delete($oldPath);
+            }
+
+            $path = $request->file('photo')->store('pets', 'public');
+            $data['photo_url'] = Storage::url($path);
+        }
+
+        $pet->update($data);
+
         return response()->json($pet);
     }
 

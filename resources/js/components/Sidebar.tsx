@@ -14,11 +14,10 @@ const Sidebar = () => {
   };
 
   const navItems = [
-    { to: '/dashboard', icon: Home, label: 'Дашборд' },
-    { to: '/pets', icon: Users, label: 'Мои питомцы' },
-    { to: '/calendar', icon: Calendar, label: 'Календарь' },
-    { to: '/health', icon: Heart, label: 'Здоровье' },
-    { to: '/expenses', icon: DollarSign, label: 'Расходы' },
+    { to: '/dashboard', icon: Home, label: 'Главная' },
+    { to: '/pets', icon: Users, label: 'Все питомцы' },
+    { to: '/calendar', icon: Calendar, label: 'Календарь и задачи' },
+    { to: '/health', icon: Heart, label: 'Медицинский журнал' },    
   ];
 
   return (

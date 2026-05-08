@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createTask, fetchAllTasks } from '../store/slices/calendarEventsSlice';
 import { RootState } from '../store';
@@ -21,8 +21,24 @@ const AddTaskModal = ({ isOpen, onClose }: AddTaskModalProps) => {
   const [time, setTime] = useState('');
   const [reminder, setReminder] = useState('none');
   const [recurrence, setRecurrence] = useState('none');
+  const [isAllDay, setIsAllDay] = useState(false);
 
   const medicalCategories = ['Лекарство', 'Ветеринар', 'Укол']; // Категория для медицинского журнала
+  
+  // Сброс формы при каждом открытии модалки
+  useEffect(() => {
+    if (isOpen) {
+      setPetId('');
+      setCategory('');
+      setIsMedical(false);
+      setTitle('');
+      setDate(new Date().toISOString().split('T')[0]);
+      setTime('');
+      setReminder('none');
+      setRecurrence('none');
+      setIsAllDay(false);           // ← Чекбокс "На весь день" всегда выключен
+    }
+  }, [isOpen]);
 
   const handleCategoryChange = (cat: string) => {
     setCategory(cat);
@@ -71,8 +87,8 @@ const AddTaskModal = ({ isOpen, onClose }: AddTaskModalProps) => {
   ];
 
   const handleSubmit = async () => {
-    if (!petId || !category || !title.trim()) {
-      toast.error('Заполните обязательные поля: питомец, категория и название');
+    if (!petId || !category) {
+      toast.error('Выберите питомца и категорию');
       return;
     }
 
@@ -99,6 +115,7 @@ const AddTaskModal = ({ isOpen, onClose }: AddTaskModalProps) => {
       reminder_minutes: reminderValue,  // ← Только число или null
       recurrence_rule: recurrence !== 'none' ? recurrence : null,
       is_medical: medicalCategories.includes(category) || (category === 'Другое' && isMedical),
+      is_all_day: isAllDay || time === '',
     };
 
     try {
@@ -119,7 +136,13 @@ const AddTaskModal = ({ isOpen, onClose }: AddTaskModalProps) => {
       setRecurrence('none');
       setIsMedical(false);
     } catch (err: any) {
-      toast.error(err || 'Ошибка создания задачи');
+      if (err.response?.data?.errors) {
+        const errors = err.response.data.errors;
+        const firstError = Object.values(errors)[0];
+        toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
+      } else {
+        toast.error(err || 'Ошибка создания задачи');
+      }
     }
   };
 
@@ -186,14 +209,13 @@ const AddTaskModal = ({ isOpen, onClose }: AddTaskModalProps) => {
 
           {/* Название задачи */}
           <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">Название задачи *</label>
+            <label className="block text-sm font-medium mb-2">Название задачи</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Введи название задачи..."
               className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              required
             />
           </div>
 
@@ -209,15 +231,36 @@ const AddTaskModal = ({ isOpen, onClose }: AddTaskModalProps) => {
                 required
               />
             </div>
+            
             <div>
-              <label className="block text-sm font-medium mb-2">Время (опционально)</label>
+              <label className="block text-sm font-medium mb-2">Время</label>
               <input
                 type="time"
-                value={time}
+                value={isAllDay ? '' : time}
                 onChange={(e) => setTime(e.target.value)}
-                className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                disabled={isAllDay}
+                className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100"
               />
             </div>
+            
+            {/* Чекбокс "На весь день" */}
+            <div className="flex items-center gap-2 mt-2 mb-4 col-span-2">
+              <input 
+                type="checkbox" 
+                id="isAllDay"
+                checked={isAllDay}
+                onChange={(e) => {
+                  setIsAllDay(e.target.checked);
+                  if (e.target.checked) {
+                    setTime('');
+                  }
+                }}
+                className="w-4 h-4 accent-emerald-500"
+              />
+              <label htmlFor="isAllDay" className="text-sm text-gray-600">
+                На весь день (без времени)
+              </label>
+            </div>            
           </div>
 
           {/* Напоминание */}

@@ -62,7 +62,7 @@ const CompleteTaskModal = ({ isOpen, onClose, task }: CompleteTaskModalProps) =>
           <div className="flex items-center gap-4 mb-6">
             <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-white shadow-md flex-shrink-0">
               <img 
-                src={task.pet?.photo || "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=200"} 
+                src={task.pet?.photo_url || task.pet?.photo || "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=200"} 
                 alt={task.pet?.name || 'Питомец'} 
                 className="w-full h-full object-cover"
               />

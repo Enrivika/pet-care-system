@@ -37,4 +37,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Выполнение задачи
     Route::patch('calendar-events/{event}/complete', [CalendarEventController::class, 'complete']);
+
+    // Медицинский журнал
+    Route::apiResource('health-records', HealthRecordController::class);
 });

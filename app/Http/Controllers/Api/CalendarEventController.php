@@ -43,14 +43,17 @@ class CalendarEventController extends Controller
         $this->authorize('update', $pet);
 
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
+            'title' => 'nullable|string|max:255',
             'event_type' => 'required|string',
             'start_at' => 'required|date',
             'end_at' => 'nullable|date|after:start_at',
             'is_recurring' => 'boolean',
             'recurrence_rule' => 'nullable|string',
             'reminder_minutes' => 'nullable|integer|min:0',
-            'is_medical' => 'boolean',                    
+            'is_medical' => 'boolean',
+            'notes' => 'nullable|string',
+            'completed_at' => 'nullable|date',
+            'is_completed' => 'boolean',
         ]);
 
 
@@ -61,8 +64,11 @@ class CalendarEventController extends Controller
         $event = $pet->events()->create([
             ...$validated,
             'created_by' => auth()->id(),
-            'is_completed' => false,
+            'is_completed' => $request->boolean('is_completed', false),
             'is_medical' => $isMedical,
+            'is_all_day' => $request->boolean('is_all_day'),
+            'notes' => $request->input('notes'),
+            'completed_at' => $request->input('completed_at'),
         ]);
 
         return response()->json($event, 201);
@@ -79,7 +85,7 @@ class CalendarEventController extends Controller
         $this->authorize('update', $event->pet);
 
         $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
+            'title' => 'nullable|string|max:255',
             'event_type' => 'sometimes|string',
             'start_at' => 'sometimes|date',
             'end_at' => 'nullable|date|after:start_at',
@@ -99,6 +105,8 @@ class CalendarEventController extends Controller
         $event->update([
             ...$validated,
             'is_medical' => $isMedical,
+            'is_all_day' => $request->boolean('is_all_day', $event->is_all_day),
+            'reminder_sent_at' => $request->has('reminder_minutes') ? null : $event->reminder_sent_at,
         ]);
 
         return response()->json($event->load('creator', 'pet'));

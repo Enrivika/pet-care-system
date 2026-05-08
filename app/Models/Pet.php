@@ -3,12 +3,24 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Pet extends Model
 {
     protected $fillable = [
         'owner_id', 'name', 'species', 'breed', 'birth_date', 'photo_url', 'weight', 'notes'
     ];
+
+    // Автоматически добавляет поле age при возврате JSON
+    protected $appends = ['age'];
+
+    public function getAgeAttribute()
+    {
+        if (!$this->birth_date) {
+            return null;
+        }
+        return Carbon::parse($this->birth_date)->age;
+    }
 
     public function owner()
     {

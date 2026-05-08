@@ -12,6 +12,7 @@ export interface CalendarEvent {
   is_recurring: boolean;
   recurrence_rule?: string;
   reminder_minutes?: number;
+  reminder_sent_at?: string;
   is_completed: boolean;
   notes?: string;
   created_at: string;
@@ -70,7 +71,16 @@ export const updateTask = createAsyncThunk(
   'calendar/updateTask',
   async ({ id, data }: { id: number; data: any }, { rejectWithValue }) => {
     try {
-      const response = await api.put(`/calendar-events/${id}`, data);
+      const dataToSend = { ...data };
+
+      // Унифицируем поведение: если reminder_minutes null или 'none' — удаляем ключ
+      if (!data.reminder_minutes || data.reminder_minutes === 'none' || data.reminder_minutes === null) {
+        delete dataToSend.reminder_minutes;
+      } else {
+        dataToSend.reminder_minutes = Number(data.reminder_minutes);
+      }
+
+      const response = await api.put(`/calendar-events/${id}`, dataToSend);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Ошибка обновления задачи');

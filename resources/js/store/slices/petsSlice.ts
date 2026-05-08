@@ -35,9 +35,13 @@ export const fetchPets = createAsyncThunk('pets/fetchPets', async (_, { rejectWi
 
 export const createPet = createAsyncThunk(
   'pets/createPet',
-  async (petData: any, { rejectWithValue }) => {
+  async (petData: FormData, { rejectWithValue }) => {
     try {
-      const response = await api.post('/pets', petData);
+      const response = await api.post('/pets', petData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Ошибка создания питомца');
@@ -53,6 +57,25 @@ export const deletePet = createAsyncThunk(
       return petId;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Ошибка удаления питомца');
+    }
+  }
+);
+
+export const updatePet = createAsyncThunk(
+  'pets/updatePet',
+  async ({ petId, formData }: { petId: number; formData: FormData }, { rejectWithValue }) => {
+    try {
+      
+      formData.append('_method', 'PUT');
+
+      const response = await api.post(`/pets/${petId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Ошибка обновления питомца');
     }
   }
 );
@@ -80,6 +103,12 @@ const petsSlice = createSlice({
       })
       .addCase(createPet.fulfilled, (state, action) => {
         state.pets.push(action.payload);
+      })
+      .addCase(updatePet.fulfilled, (state, action) => {
+        const index = state.pets.findIndex(p => p.id === action.payload.id);
+        if (index !== -1) {
+          state.pets[index] = action.payload;
+        }
       })
       .addCase(deletePet.fulfilled, (state, action) => {
         state.pets = state.pets.filter(pet => pet.id !== action.payload);
