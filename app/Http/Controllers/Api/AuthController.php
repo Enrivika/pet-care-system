@@ -65,4 +65,48 @@ public function register(Request $request)
 
         return response()->json(['message' => 'Выход выполнен']);
     }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'notify_email' => 'boolean',
+            'notify_push' => 'boolean',
+        ]);
+
+    $user->update([
+        'name' => $validated['name'],
+        'email' => $validated['email'],
+        'notify_email' => $request->boolean('notify_email', true),
+        'notify_push' => $request->boolean('notify_push', true),
+    ]);
+
+        return response()->json([
+            'message' => 'Профиль обновлён',
+            'user' => $user
+        ]);
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|min:6|confirmed',
+        ]);
+
+        if (!Hash::check($validated['current_password'], $user->password)) {
+            return response()->json(['message' => 'Неверный текущий пароль'], 422);
+        }
+
+        $user->update([
+            'password' => Hash::make($validated['new_password'])
+        ]);
+
+        return response()->json(['message' => 'Пароль успешно изменён']);
+    }
 }

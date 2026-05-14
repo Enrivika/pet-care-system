@@ -23,6 +23,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'notify_email',
+        'notify_push',
     ];
 
     /**

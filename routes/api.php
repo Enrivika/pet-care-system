@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\PetController;
 use App\Http\Controllers\Api\PetShareController;
 use App\Http\Controllers\Api\CalendarEventController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\NotificationController;
 
 // Публичные маршруты (без авторизации)
 Route::post('/register', [AuthController::class, 'register']);
@@ -40,4 +41,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Медицинский журнал
     Route::apiResource('health-records', HealthRecordController::class);
+
+    // Уведомления    
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/notifications/clear', [NotificationController::class, 'clearAll']);
+
+    // Обновление профиля
+    Route::post('/user/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/user/password', [AuthController::class, 'updatePassword']);
+    
 });

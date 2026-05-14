@@ -22,7 +22,7 @@ const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
     setIsLoading(true);
 
     try {
-      // Здесь позже будет реальный API-запрос
+      // TODO: Подключить реальный API позже
       await new Promise(resolve => setTimeout(resolve, 800));
       
       toast.success('Ссылка для сброса пароля отправлена на почту!');
@@ -38,44 +38,54 @@ const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
-      <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-xl">
-        <h2 className="text-2xl font-bold text-center mb-4">Забыли пароль?</h2>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] px-4">
+      <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl relative">
         
-        <p className="text-center text-gray-600 mb-6">
-          Введите ваш email, и мы отправим ссылку для сброса пароля
+        {/* Иллюстрация */}
+        <div className="absolute -top-12 -left-20 z-10">
+          <img 
+            src="/images/Cat_and_dog.png" 
+            alt="Котик и собачка" 
+            className="w-36 h-36 object-contain drop-shadow-xl" 
+          />
+        </div>
+
+        <h2 className="text-3xl font-bold text-center text-gray-900 mb-3">
+          Забыли пароль?
+        </h2>
+        
+        <p className="text-center text-gray-600 mb-8 leading-relaxed">
+          Введите ваш email, и мы отправим ссылку<br />для сброса пароля:
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-5 py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-lg placeholder:text-gray-400"
               placeholder="Введите ваш email..."
               required
             />
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-3 border border-gray-300 rounded-2xl font-medium hover:bg-gray-50"
-            >
-              Отмена
-            </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="flex-1 py-3 bg-emerald-500 text-white rounded-2xl font-medium hover:bg-emerald-600 disabled:opacity-70"
-            >
-              {isLoading ? 'Отправка...' : 'Отправить ссылку'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-lg rounded-2xl transition-all disabled:opacity-70 shadow-lg shadow-emerald-200"
+          >
+            {isLoading ? 'Отправка...' : 'Отправить ссылку'}
+          </button>
         </form>
+
+        {/* Ссылка "Вернуться на страницу входа" */}
+        <button 
+          onClick={onClose}
+          className="block w-full text-center mt-6 text-emerald-600 hover:underline font-medium"
+        >
+          Вернуться на страницу входа
+        </button>
       </div>
     </div>
   );

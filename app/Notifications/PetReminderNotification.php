@@ -2,17 +2,17 @@
 
 namespace App\Notifications;
 
-use App\Models\CalendarEvent;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use App\Models\CalendarEvent;
 
 class PetReminderNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    public CalendarEvent $event;
+    public $event;
 
     public function __construct(CalendarEvent $event)
     {
@@ -21,28 +21,40 @@ class PetReminderNotification extends Notification implements ShouldQueue
 
     public function via($notifiable)
     {
-        return ['database', 'mail'];
+        $channels = [];
+
+        // Проверяем настройки пользователя
+        if ($notifiable->notify_email) {
+            $channels[] = 'mail';
+        }
+
+        if ($notifiable->notify_push) {
+            $channels[] = 'database'; // для колокольчика
+        }
+
+        return $channels;
     }
 
     public function toMail($notifiable)
     {
         return (new MailMessage)
             ->subject('Напоминание: ' . $this->event->title)
-            ->greeting('Здравствуйте, ' . $notifiable->name . '!')
-            ->line('У вас запланировано событие для питомца ' . $this->event->pet->name . ':')
-            ->line($this->event->title)
-            ->line('Время: ' . $this->event->start_at->format('d.m.Y H:i'))
-            ->action('Открыть в Petopia', url('/calendar'))
-            ->line('Спасибо за использование Petopia!');
+            ->greeting('Привет, ' . $notifiable->name . '!')
+            ->line('Напоминаем о задаче для питомца **' . $this->event->pet->name . '**:')
+            ->line('**' . $this->event->title . '**')
+            ->line('Категория: ' . $this->event->category)
+            ->line('Дата и время: ' . $this->event->start_at->format('d.m.Y H:i'))
+            ->action('Посмотреть в Petopia', url('/dashboard'))
+            ->line('Спасибо, что заботишься о своих питомцах!');
     }
 
     public function toArray($notifiable)
     {
         return [
+            'title' => 'Напоминание: ' . $this->event->title,
+            'body' => 'Задача для ' . $this->event->pet->name . ' в ' . $this->event->start_at->format('H:i'),
             'event_id' => $this->event->id,
-            'title' => $this->event->title,
-            'pet_name' => $this->event->pet->name,
-            'start_at' => $this->event->start_at->toDateTimeString(),
+            'pet_id' => $this->event->pet_id,
         ];
     }
 }

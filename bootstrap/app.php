@@ -26,4 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Автоматический перенос просроченных задач в «Историю»
         $schedule->command('tasks:mark-overdue')->everyFiveMinutes();
     })
+    ->withSchedule(function (Schedule $schedule) {
+        $schedule->job(new \App\Jobs\SendPetReminders)->everyMinute();
+    })
     ->create();

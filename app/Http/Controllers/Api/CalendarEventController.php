@@ -70,8 +70,14 @@ class CalendarEventController extends Controller
             'notes' => $request->input('notes'),
             'completed_at' => $request->input('completed_at'),
         ]);
-
-        return response()->json($event, 201);
+        
+        // === ОТПРАВКА УВЕДОМЛЕНИЯ ===
+        if ($event->reminder_minutes > 0) {
+            $user = auth()->user();
+            $user->notify(new \App\Notifications\PetReminderNotification($event));
+        }  
+             
+        return response()->json($event->load('pet'), 201);
     }
 
     public function show(CalendarEvent $event)
@@ -127,15 +133,69 @@ class CalendarEventController extends Controller
     {
         $this->authorize('update', $event->pet);
 
+        // Отмечаем текущую задачу как выполненную
         $event->update([
             'is_completed' => true,
-            'completed_at' => now(),  // ← Добавили время выполнения
+            'completed_at' => now(),
             'notes' => $request->input('notes'),
         ]);
 
+        // === АВТОМАТИЧЕСКОЕ СОЗДАНИЕ СЛЕДУЮЩЕЙ ЗАДАЧИ (ПОВТОР) ===
+        if ($event->recurrence_rule && $event->recurrence_rule !== 'none') {
+            $nextDate = $this->calculateNextDate($event->start_at, $event->recurrence_rule);
+
+            if ($nextDate) {
+                $newTask = $event->replicate(); // копируем все поля
+                $newTask->start_at = $nextDate;
+                $newTask->is_completed = false;
+                $newTask->completed_at = null;
+                $newTask->notes = null;
+                $newTask->save();
+            }
+        }
+
         return response()->json([
             'message' => 'Задача выполнена',
-            'event' => $event->load('creator', 'pet')  // ← Загружаем связи
+            'event' => $event->load('creator', 'pet')
         ]);
+    }
+
+    /**
+     * Вычисляет следующую дату на основе правила повтора
+     */
+    private function calculateNextDate(string $startAt, string $recurrence): ?string
+    {
+        $date = new \DateTime($startAt);
+
+        switch ($recurrence) {
+            case 'daily':
+                $date->modify('+1 day');
+                break;
+            case 'weekdays':
+                // Пропускаем выходные
+                do {
+                    $date->modify('+1 day');
+                } while (in_array($date->format('N'), [6, 7]));
+                break;
+            case 'weekends':
+                // Только выходные
+                do {
+                    $date->modify('+1 day');
+                } while (!in_array($date->format('N'), [6, 7]));
+                break;
+            case 'weekly':
+                $date->modify('+1 week');
+                break;
+            case 'monthly':
+                $date->modify('+1 month');
+                break;
+            case 'yearly':
+                $date->modify('+1 year');
+                break;
+            default:
+                return null;
+        }
+
+        return $date->format('Y-m-d H:i:s');
     }
 }

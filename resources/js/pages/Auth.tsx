@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import api from '../api/axios';
 import { useDispatch } from 'react-redux';
 import { login } from '../store/slices/authSlice';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
+import { Eye, EyeOff } from 'lucide-react';
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
@@ -12,27 +13,42 @@ const Auth = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // === LOGIN STATE ===
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
 
-  // === REGISTER STATE ===
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regPasswordConfirm, setRegPasswordConfirm] = useState('');
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [showRegPasswordConfirm, setShowRegPasswordConfirm] = useState(false);
   const [agree, setAgree] = useState(false);
   const [regLoading, setRegLoading] = useState(false);
 
-  // === LOGIN HANDLER ===
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('rememberedEmail');
+    if (savedEmail) {
+      setLoginEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginLoading(true);
 
     try {
       await dispatch(login({ email: loginEmail, password: loginPassword }) as any).unwrap();
+
+      if (rememberMe) {
+        localStorage.setItem('rememberedEmail', loginEmail);
+      } else {
+        localStorage.removeItem('rememberedEmail');
+      }
+
       toast.success('Добро пожаловать!');
       navigate('/dashboard');
     } catch (err: any) {
@@ -42,7 +58,6 @@ const Auth = () => {
     }
   };
 
-  // === REGISTER HANDLER ===
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -79,194 +94,269 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#E8F5E9] px-4">
-      <div className="w-full max-w-md">
-        {/* Логотип */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-white text-4xl">🐾</span>
-            </div>
+    <div className="min-h-screen flex items-center justify-center bg-[#E8F5E9] px-4 py-8 relative overflow-hidden">
+      {/* Фон */}
+      <div className="absolute inset-0 bg-[radial-gradient(#d1fae5_0.8px,transparent_1px)] bg-[length:4px_4px]"></div>
+
+      <div className="w-full max-w-md relative z-10">        
+        {/* Логотип + заголовок */}
+        <div className="flex flex-col items-center mb-12">
+          <div className="flex items-center gap-4 mb-3">
+            {/* Логотип */}
+            <img 
+              src="/images/Cat_and_dog.png" 
+              alt="Petopia" 
+              className="w-16 h-16 object-contain" 
+            />
+            
+            {/* Название Petopia */}
+            <h1 
+              className="text-6xl font-bold text-gray-900 tracking-[-0.03em]" 
+              style={{ fontFamily: 'Itim, cursive' }}
+            >
+              Petopia
+            </h1>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900">Petopia</h1>
-          <p className="mt-2 text-gray-600">Уход за питомцами — просто и удобно</p>
+          
+          {/* Подзаголовок */}
+          <p 
+            className="text-xl text-gray-600 tracking-[-0.02em] text-center" 
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            Уход за питомцами — просто и удобно
+          </p>
         </div>
 
-        {/* Карточка с вкладками */}
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-          {/* Вкладки */}
-          <div className="flex border-b">
-            <button
-              onClick={() => setActiveTab('login')}
-              className={`flex-1 py-4 font-medium text-center transition-colors ${
-                activeTab === 'login' 
-                  ? 'border-b-2 border-emerald-500 text-emerald-600' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Войти
-            </button>
-            <button
-              onClick={() => setActiveTab('register')}
-              className={`flex-1 py-4 font-medium text-center transition-colors ${
-                activeTab === 'register' 
-                  ? 'border-b-2 border-emerald-500 text-emerald-600' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Регистрация
-            </button>
+        {/* === КАРТОЧКА === */}
+        <div className="relative w-full max-w-lg md:max-w-xl mx-auto">
+          
+          {/* Картинка — на мобильном сверху, на десктопе сбоку */}
+          <div className="absolute -top-16 -left-16 md:-top-20 md:-left-20 z-20 md:block hidden">
+            <img 
+              src="/images/Cat_and_dog.png" 
+              alt="Котик и собачка" 
+              className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-2xl" 
+            />
           </div>
 
-          {/* Контент вкладок */}
-          <div className="p-8">
-            {/* ВХОД */}
-            {activeTab === 'login' && (
-              <form onSubmit={handleLogin} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-                  <input
-                    type="email"
-                    value={loginEmail}
-                    onChange={(e) => setLoginEmail(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="Введите ваш email..."
-                    required
-                  />
-                </div>
+          {/* Картинка для мобильных (над карточкой) */}
+          <div className="md:hidden flex justify-center -mt-4 mb-6">
+            <img 
+              src="/images/Cat_and_dog.png" 
+              alt="Котик и собачка" 
+              className="w-28 h-28 object-contain drop-shadow-xl" 
+            />
+          </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Пароль</label>
-                  <input
-                    type="password"
-                    value={loginPassword}
-                    onChange={(e) => setLoginPassword(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="Введите ваш пароль..."
-                    required
-                  />
-                </div>
+          {/* Карточка */}
+          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 relative z-10">
+            
+            {/* Вкладки */}
+            <div className="flex border-b">
+              <button
+                onClick={() => setActiveTab('login')}
+                className={`flex-1 py-4 font-semibold text-base md:text-lg transition-all tracking-[-0.02em] ${activeTab === 'login' 
+                  ? 'border-b-4 border-emerald-500 text-emerald-600' 
+                  : 'text-gray-400 hover:text-gray-600'}`}
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                Войти
+              </button>
+              <button
+                onClick={() => setActiveTab('register')}
+                className={`flex-1 py-4 font-semibold text-base md:text-lg transition-all tracking-[-0.02em] ${activeTab === 'register' 
+                  ? 'border-b-4 border-emerald-500 text-emerald-600' 
+                  : 'text-gray-400 hover:text-gray-600'}`}
+                style={{ fontFamily: 'Inter, sans-serif' }}
+              >
+                Регистрация
+              </button>
+            </div>
 
-                <div className="flex items-center justify-between text-sm">
-                  <label className="flex items-center gap-2 cursor-pointer">
+            {/* Контент */}
+            <div className="p-6 md:p-8">
+              {/* ВХОД */}
+              {activeTab === 'login' && (
+                <form onSubmit={handleLogin} className="space-y-5 md:space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 tracking-[-0.02em]" style={{ fontFamily: 'Inter, sans-serif' }}>Email</label>
+                    <input
+                      type="email"
+                      value={loginEmail}
+                      onChange={(e) => setLoginEmail(e.target.value)}
+                      className="w-full px-4 md:px-5 py-3.5 md:py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base md:text-lg tracking-[-0.02em]"
+                      placeholder="Введите ваш email..."
+                      required
+                      style={{ fontFamily: 'Inter, sans-serif' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 tracking-[-0.02em]" style={{ fontFamily: 'Inter, sans-serif' }}>Пароль</label>
+                    <div className="relative">
+                      <input
+                        type={showLoginPassword ? 'text' : 'password'}
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                        className="w-full px-4 md:px-5 py-3.5 md:py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base md:text-lg pr-12 tracking-[-0.02em]"
+                        placeholder="Введите ваш пароль..."
+                        required
+                        style={{ fontFamily: 'Inter, sans-serif' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                        className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                      >
+                        {showLoginPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={rememberMe}
+                        onChange={(e) => setRememberMe(e.target.checked)}
+                        className="w-4 h-4 accent-emerald-500"
+                      />
+                      <span className="text-gray-600 tracking-[-0.02em]" style={{ fontFamily: 'Inter, sans-serif' }}>Запомнить меня</span>
+                    </label>
+
+                    <button 
+                      type="button" 
+                      onClick={() => setShowForgotModal(true)}
+                      className="text-emerald-600 hover:underline font-medium tracking-[-0.02em]"
+                      style={{ fontFamily: 'Inter, sans-serif' }}
+                    >
+                      Забыли пароль?
+                    </button>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loginLoading}
+                    className="w-full py-3.5 md:py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-base md:text-lg rounded-2xl transition-all disabled:opacity-70 mt-2 shadow-lg shadow-emerald-200 tracking-[-0.02em]"
+                    style={{ fontFamily: 'Inter, sans-serif' }}
+                  >
+                    {loginLoading ? 'Вход...' : 'Войти'}
+                  </button>
+                </form>
+              )}
+
+              {/* РЕГИСТРАЦИЯ */}
+              {activeTab === 'register' && (
+                <form onSubmit={handleRegister} className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 tracking-[-0.02em]" style={{ fontFamily: 'Inter, sans-serif' }}>Имя</label>
+                    <input
+                      type="text"
+                      value={regName}
+                      onChange={(e) => setRegName(e.target.value)}
+                      className="w-full px-4 md:px-5 py-3.5 md:py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base md:text-lg tracking-[-0.02em]"
+                      placeholder="Введите ваше имя"
+                      required
+                      style={{ fontFamily: 'Inter, sans-serif' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 tracking-[-0.02em]" style={{ fontFamily: 'Inter, sans-serif' }}>Email</label>
+                    <input
+                      type="email"
+                      value={regEmail}
+                      onChange={(e) => setRegEmail(e.target.value)}
+                      className="w-full px-4 md:px-5 py-3.5 md:py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base md:text-lg tracking-[-0.02em]"
+                      placeholder="Введите ваш email..."
+                      required
+                      style={{ fontFamily: 'Inter, sans-serif' }}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 tracking-[-0.02em]" style={{ fontFamily: 'Inter, sans-serif' }}>Пароль</label>
+                    <div className="relative">
+                      <input
+                        type={showRegPassword ? 'text' : 'password'}
+                        value={regPassword}
+                        onChange={(e) => setRegPassword(e.target.value)}
+                        className="w-full px-4 md:px-5 py-3.5 md:py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base md:text-lg pr-12 tracking-[-0.02em]"
+                        placeholder="Придумайте пароль"
+                        required
+                        minLength={6}
+                        style={{ fontFamily: 'Inter, sans-serif' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegPassword(!showRegPassword)}
+                        className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                      >
+                        {showRegPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 tracking-[-0.02em]" style={{ fontFamily: 'Inter, sans-serif' }}>Повторите пароль</label>
+                    <div className="relative">
+                      <input
+                        type={showRegPasswordConfirm ? 'text' : 'password'}
+                        value={regPasswordConfirm}
+                        onChange={(e) => setRegPasswordConfirm(e.target.value)}
+                        className="w-full px-4 md:px-5 py-3.5 md:py-4 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-base md:text-lg pr-12 tracking-[-0.02em]"
+                        placeholder="Повторите пароль"
+                        required
+                        style={{ fontFamily: 'Inter, sans-serif' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegPasswordConfirm(!showRegPasswordConfirm)}
+                        className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                      >
+                        {showRegPasswordConfirm ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 pt-2">
                     <input
                       type="checkbox"
-                      checked={rememberMe}
-                      onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-4 h-4 accent-emerald-500"
+                      id="agree"
+                      checked={agree}
+                      onChange={(e) => setAgree(e.target.checked)}
+                      className="mt-1.5 w-4 h-4 accent-emerald-500"
                     />
-                    <span className="text-gray-600">Запомнить меня</span>
-                  </label>
+                    <label htmlFor="agree" className="text-sm text-gray-600 leading-tight tracking-[-0.02em]" style={{ fontFamily: 'Inter, sans-serif' }}>
+                      Я согласен с{' '}
+                      <a href="#" className="text-emerald-600 hover:underline font-medium">политикой конфиденциальности</a>
+                    </label>
+                  </div>
 
-                  {/* Кнопка "Забыли пароль?" */}
-                  <button 
-                    type="button" 
-                    onClick={() => setShowForgotModal(true)}
-                    className="text-emerald-600 hover:underline"
+                  <button
+                    type="submit"
+                    disabled={regLoading || !agree}
+                    className="w-full py-3.5 md:py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-base md:text-lg rounded-2xl transition-all disabled:opacity-70 mt-4 shadow-lg shadow-emerald-200 tracking-[-0.02em]"
+                    style={{ fontFamily: 'Inter, sans-serif' }}
                   >
-                    Забыли пароль?
+                    {regLoading ? 'Регистрация...' : 'Создать аккаунт'}
                   </button>
-                </div>
+                </form>
+              )}
+            </div>
 
-                <button
-                  type="submit"
-                  disabled={loginLoading}
-                  className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-2xl transition-colors disabled:opacity-70 mt-2"
-                >
-                  {loginLoading ? 'Вход...' : 'Войти'}
-                </button>
-              </form>
-            )}
-
-            {/* РЕГИСТРАЦИЯ */}
-            {activeTab === 'register' && (
-              <form onSubmit={handleRegister} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Имя</label>
-                  <input
-                    type="text"
-                    value={regName}
-                    onChange={(e) => setRegName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="Введите ваше имя"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-                  <input
-                    type="email"
-                    value={regEmail}
-                    onChange={(e) => setRegEmail(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="Введите ваш email..."
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Пароль</label>
-                    <input
-                      type="password"
-                      value={regPassword}
-                      onChange={(e) => setRegPassword(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      placeholder="Придумайте пароль"
-                      required
-                      minLength={6}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Повторите</label>
-                    <input
-                      type="password"
-                      value={regPasswordConfirm}
-                      onChange={(e) => setRegPasswordConfirm(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      placeholder="Повторите пароль"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2 pt-1">
-                  <input
-                    type="checkbox"
-                    id="agree"
-                    checked={agree}
-                    onChange={(e) => setAgree(e.target.checked)}
-                    className="mt-1 w-4 h-4 accent-emerald-500"
-                  />
-                  <label htmlFor="agree" className="text-sm text-gray-600">
-                    Я согласен с{' '}
-                    <a href="#" className="text-emerald-600 hover:underline">политикой конфиденциальности</a>
-                  </label>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={regLoading || !agree}
-                  className="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-2xl transition-colors disabled:opacity-70 mt-2"
-                >
-                  {regLoading ? 'Регистрация...' : 'Создать аккаунт'}
-                </button>
-              </form>
-            )}
-          </div>
-
-          <div className="px-8 pb-6 text-center text-sm text-gray-500">
-            {activeTab === 'login' ? (
-              <>Нет аккаунта? <button onClick={() => setActiveTab('register')} className="text-emerald-600 hover:underline">Зарегистрироваться</button></>
-            ) : (
-              <>Уже есть аккаунт? <button onClick={() => setActiveTab('login')} className="text-emerald-600 hover:underline">Войти</button></>
-            )}
+            {/* Нижняя часть */}
+            <div className="px-6 md:px-8 pb-8 text-center text-sm text-gray-500 tracking-[-0.02em]" style={{ fontFamily: 'Inter, sans-serif' }}>
+              {activeTab === 'login' ? (
+                <>Нет аккаунта? <button onClick={() => setActiveTab('register')} className="text-emerald-600 hover:underline font-medium">Зарегистрироваться</button></>
+              ) : (
+                <>Уже есть аккаунт? <button onClick={() => setActiveTab('login')} className="text-emerald-600 hover:underline font-medium">Войти</button></>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Модалка сброса пароля */}
       <ForgotPasswordModal 
         isOpen={showForgotModal} 
         onClose={() => setShowForgotModal(false)} 
