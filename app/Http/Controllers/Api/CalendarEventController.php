@@ -69,14 +69,15 @@ class CalendarEventController extends Controller
             'is_all_day' => $request->boolean('is_all_day'),
             'notes' => $request->input('notes'),
             'completed_at' => $request->input('completed_at'),
+            'reminder_minutes' => $request->input('reminder_minutes'),
         ]);
-        
+        /*
         // === ОТПРАВКА УВЕДОМЛЕНИЯ ===
-        if ($event->reminder_minutes > 0) {
+        if (!empty($validated['reminder_minutes']) && $validated['reminder_minutes'] > 0) {
             $user = auth()->user();
             $user->notify(new \App\Notifications\PetReminderNotification($event));
         }  
-             
+        */     
         return response()->json($event->load('pet'), 201);
     }
 
@@ -112,8 +113,14 @@ class CalendarEventController extends Controller
             ...$validated,
             'is_medical' => $isMedical,
             'is_all_day' => $request->boolean('is_all_day', $event->is_all_day),
+            'reminder_minutes' => $request->input('reminder_minutes', $event->reminder_minutes),
             'reminder_sent_at' => $request->has('reminder_minutes') ? null : $event->reminder_sent_at,
         ]);
+
+        // Если изменили время напоминания — сбрасываем флаг отправки
+        if ($request->has('reminder_minutes')) {
+            $event->update(['reminder_sent_at' => null]);
+        }        
 
         return response()->json($event->load('creator', 'pet'));
     }

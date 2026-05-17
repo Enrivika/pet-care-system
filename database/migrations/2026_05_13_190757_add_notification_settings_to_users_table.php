@@ -6,24 +6,22 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up()
+    public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->boolean('notify_email')->default(true);
-            $table->boolean('notify_push')->default(true);
+            if (!Schema::hasColumn('users', 'notify_email')) {
+                $table->boolean('notify_email')->default(true);
+            }
+            if (!Schema::hasColumn('users', 'notify_push')) {
+                $table->boolean('notify_push')->default(true);
+            }
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            //
+            $table->dropColumn(['notify_email', 'notify_push']);
         });
     }
 };

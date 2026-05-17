@@ -22,6 +22,7 @@ const AddTaskModal = ({ isOpen, onClose }: AddTaskModalProps) => {
   const [reminder, setReminder] = useState('none');
   const [recurrence, setRecurrence] = useState('none');
   const [isAllDay, setIsAllDay] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const medicalCategories = ['Лекарство', 'Ветеринар', 'Укол']; // Категория для медицинского журнала
   
@@ -97,9 +98,14 @@ const AddTaskModal = ({ isOpen, onClose }: AddTaskModalProps) => {
       return;
     }
 
-    // Явное преобразование reminder_minutes в число или null
+    setIsSubmitting(true);
+    
     let reminderValue: number | null = null;
-    if (reminder !== 'none') {
+    if (reminder === 'none') {
+      reminderValue = null;
+    } else if (reminder === '0') {
+      reminderValue = 0;
+    } else {
       reminderValue = parseInt(reminder, 10);
     }
 
@@ -142,7 +148,9 @@ const AddTaskModal = ({ isOpen, onClose }: AddTaskModalProps) => {
         toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
       } else {
         toast.error(err || 'Ошибка создания задачи');
-      }
+      }      
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -305,9 +313,17 @@ const AddTaskModal = ({ isOpen, onClose }: AddTaskModalProps) => {
             </button>
             <button 
               onClick={handleSubmit}
-              className="flex-1 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600"
+              disabled={isSubmitting}
+              className="flex-1 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 disabled:bg-emerald-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Добавить задачу
+              {isSubmitting ? (
+                <>
+                  <span className="animate-spin">⏳</span>
+                  Добавление...
+                </>
+              ) : (
+                'Добавить задачу'
+              )}
             </button>
           </div>
         </div>

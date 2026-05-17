@@ -52,7 +52,7 @@ export const createTask = createAsyncThunk(
       const dataToSend = { ...taskData };
 
       // Если значение null, 0 или 'none' — УДАЛЯЕМ ключ из объекта
-      if (!taskData.reminder_minutes || taskData.reminder_minutes === 'none') {
+      if (taskData.reminder_minutes == null || taskData.reminder_minutes === 'none') {
         delete dataToSend.reminder_minutes;
       } else {
         dataToSend.reminder_minutes = Number(taskData.reminder_minutes);
@@ -74,7 +74,7 @@ export const updateTask = createAsyncThunk(
       const dataToSend = { ...data };
 
       // Унифицируем поведение: если reminder_minutes null или 'none' — удаляем ключ
-      if (!data.reminder_minutes || data.reminder_minutes === 'none' || data.reminder_minutes === null) {
+      if (data.reminder_minutes == null || data.reminder_minutes === 'none') {
         delete dataToSend.reminder_minutes;
       } else {
         dataToSend.reminder_minutes = Number(data.reminder_minutes);

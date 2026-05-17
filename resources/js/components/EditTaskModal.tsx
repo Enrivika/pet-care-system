@@ -23,7 +23,9 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
   const [isMedical, setIsMedical] = useState(false);
   const [reminder, setReminder] = useState('none');
   const [recurrence, setRecurrence] = useState('none');
+  const [isMomentOfEvent, setIsMomentOfEvent] = useState(false);
   const [isAllDay, setIsAllDay] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isCompleted = task?.is_completed;
 
@@ -72,11 +74,13 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
         setTime('00:00');
       }
 
-      setReminder(
-        task.reminder_minutes != null 
-          ? task.reminder_minutes.toString() 
-          : 'none'
-      );
+      if (task.reminder_minutes === 0) {
+        setReminder('0');
+      } else if (task.reminder_minutes != null) {
+        setReminder(task.reminder_minutes.toString());
+      } else {
+        setReminder('none');
+      }
       setRecurrence(task.recurrence_rule || 'none');
     }
   }, [task, isOpen]);
@@ -112,12 +116,18 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
 
     if (isCompleted) {
       taskData.notes = notes.trim() || null;
-    } else {      
-      if (reminder !== 'none') {
-        taskData.reminder_minutes = parseInt(reminder);
+    } else {            
+      if (reminder === 'none') {
+        taskData.reminder_minutes = null;
+      } else if (reminder === '0' || isMomentOfEvent) {
+        taskData.reminder_minutes = 0;
+      } else {
+        taskData.reminder_minutes = parseInt(reminder, 10);
       }
       taskData.recurrence_rule = recurrence !== 'none' ? recurrence : null;
     }
+
+    setIsSubmitting(true);
 
     try {
       await dispatch(updateTask({ id: task.id, data: taskData }) as any).unwrap();
@@ -127,6 +137,8 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
       onClose();
     } catch (err: any) {
       toast.error(err || 'Ошибка обновления задачи');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -269,7 +281,11 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
                 <label className="block text-sm font-medium mb-2">Напоминание</label>
                 <select 
                   value={reminder} 
-                  onChange={(e) => setReminder(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setReminder(value);
+                    setIsMomentOfEvent(value === '0');
+                  }}
                   className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   <option value="none">Без напоминания</option>
@@ -309,9 +325,17 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
           </button>
           <button 
             onClick={handleSubmit}
-            className="flex-1 py-3.5 bg-emerald-500 text-white rounded-2xl font-medium hover:bg-emerald-600 transition-colors"
+            disabled={isSubmitting}
+            className="flex-1 py-3.5 bg-emerald-500 text-white rounded-2xl font-medium hover:bg-emerald-600 transition-colors disabled:bg-emerald-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            Сохранить изменения
+            {isSubmitting ? (
+              <>
+                <span className="animate-spin">⏳</span>
+                Сохранение...
+              </>
+            ) : (
+              'Сохранить изменения'
+            )}
           </button>
         </div>
       </div>

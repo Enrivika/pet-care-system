@@ -104,7 +104,7 @@ const Auth = () => {
           <div className="flex items-center gap-4 mb-3">
             {/* Логотип */}
             <img 
-              src="/images/Cat_and_dog.png" 
+              src="/images/Petopia.png" 
               alt="Petopia" 
               className="w-16 h-16 object-contain" 
             />

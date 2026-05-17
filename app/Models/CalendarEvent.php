@@ -15,7 +15,8 @@ class CalendarEvent extends Model
     protected $casts = [
             'start_at' => 'datetime',
             'end_at' => 'datetime',
-            'reminder_sent_at' => 'datetime',   // ← Добавили
+            'reminder_minutes' => 'integer',
+            'reminder_sent_at' => 'datetime',
             'is_recurring' => 'boolean',
             'is_completed' => 'boolean',
             'is_medical' => 'boolean',
