@@ -74,22 +74,47 @@ public function register(Request $request)
         $user = $request->user();
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'name' => 'sometimes|required|string|max:255',
+            'email' => 'sometimes|required|email|unique:users,email,' . $user->id,
             'notify_email' => 'boolean',
             'notify_push' => 'boolean',
+            'avatar' => 'nullable|image|max:2048',
         ]);
 
-    $user->update([
-        'name' => $validated['name'],
-        'email' => $validated['email'],
-        'notify_email' => $request->boolean('notify_email', true),
-        'notify_push' => $request->boolean('notify_push', true),
-    ]);
+        $data = [
+            'name' => $request->input('name', $user->name),
+            'email' => $request->input('email', $user->email),
+            'notify_email' => $request->boolean('notify_email', $user->notify_email ?? true),
+            'notify_push' => $request->boolean('notify_push', $user->notify_push ?? true),
+        ];
+
+        // Обработка загрузки аватара (сохраняем в public/users/, удаляем старый)
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $filename = time() . '_' . $file->getClientOriginalName();
+
+            $usersPath = public_path('users');
+            if (!file_exists($usersPath)) {
+                mkdir($usersPath, 0755, true);
+            }
+
+            // Удаляем предыдущий аватар, если он был в public/users
+            if ($user->avatar && str_starts_with($user->avatar, '/users/')) {
+                $oldPath = public_path(str_replace('/users/', 'users/', $user->avatar));
+                if (file_exists($oldPath)) {
+                    @unlink($oldPath);
+                }
+            }
+
+            $file->move($usersPath, $filename);
+            $data['avatar'] = '/users/' . $filename;
+        }
+
+        $user->update($data);
 
         return response()->json([
             'message' => 'Профиль обновлён',
-            'user' => $user
+            'user' => $user->fresh()
         ]);
     }
 

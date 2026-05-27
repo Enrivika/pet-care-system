@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../api/axios';
 import { toast } from 'sonner';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -15,6 +16,37 @@ const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProps) => {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  // Сброс формы каждый раз, когда модалка открывается заново
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setShowCurrent(false);
+      setShowNew(false);
+      setShowConfirm(false);
+      setLoading(false);
+    }
+  }, [isOpen]);
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
+
+  const handleClose = () => {
+    // Полный сброс состояния при закрытии
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowCurrent(false);
+    setShowNew(false);
+    setShowConfirm(false);
+    setLoading(false);
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -36,12 +68,7 @@ const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProps) => {
       });
 
       toast.success('Пароль успешно изменён!');
-      onClose();
-      
-      // Очистка полей
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      handleClose();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Ошибка смены пароля');
     } finally {
@@ -50,9 +77,15 @@ const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProps) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[110]">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8">
-        <h2 className="text-2xl font-bold text-center mb-6">Смена пароль</h2>
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[110]"
+      onClick={handleBackdropClick}
+    >
+      <div
+        className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="text-2xl font-bold text-center mb-6">Смена пароля</h2>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Старый пароль */}
@@ -70,9 +103,9 @@ const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProps) => {
               <button
                 type="button"
                 onClick={() => setShowCurrent(!showCurrent)}
-                className="absolute right-4 top-4 text-gray-400"
+                className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
               >
-                {showCurrent ? '🙈' : '👁️'}
+                {showCurrent ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
               </button>
             </div>
           </div>
@@ -92,9 +125,9 @@ const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProps) => {
               <button
                 type="button"
                 onClick={() => setShowNew(!showNew)}
-                className="absolute right-4 top-4 text-gray-400"
+                className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
               >
-                {showNew ? '🙈' : '👁️'}
+                {showNew ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
               </button>
             </div>
           </div>
@@ -114,27 +147,28 @@ const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProps) => {
               <button
                 type="button"
                 onClick={() => setShowConfirm(!showConfirm)}
-                className="absolute right-4 top-4 text-gray-400"
+                className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
               >
-                {showConfirm ? '🙈' : '👁️'}
+                {showConfirm ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <button 
-              type="button" 
-              onClick={onClose}
-              className="flex-1 py-3.5 border rounded-2xl"
-            >
-              Отмена
-            </button>
-            <button 
+          <div className="space-y-3 pt-4">
+            <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3.5 bg-emerald-500 text-white rounded-2xl disabled:opacity-70"
+              className="w-full py-3.5 bg-emerald-500 text-white rounded-2xl font-medium hover:bg-emerald-600 disabled:opacity-70"
             >
               {loading ? 'Сохранение...' : 'Изменить пароль'}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleClose}
+              className="w-full py-3.5 border border-gray-300 rounded-2xl hover:bg-gray-50"
+            >
+              Отмена
             </button>
           </div>
         </form>
