@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import PetProfileModal from '../components/PetProfileModal';
 import CompleteTaskModal from '../components/CompleteTaskModal';
 import { useState } from 'react';
+import EditPetModal from '../components/EditPetModal';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -18,12 +19,33 @@ const Dashboard = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState<any>(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showEditPetModal, setShowEditPetModal] = useState(false);
+  const [editingPet, setEditingPet] = useState<any>(null);
 
   // Загрузка данных
   useEffect(() => {
     dispatch(fetchPets() as any);
     dispatch(fetchAllTasks() as any);
   }, [dispatch]);
+ 
+  // ==== Тихое автообновление блока "Ближайшие задачи" ====
+  useEffect(() => {
+    const interval = setInterval(() => {
+      dispatch(fetchAllTasks() as any);
+    }, 60000); // 60 секунд
+
+    return () => clearInterval(interval);
+  }, [dispatch]);  
+
+  const formatAge = (age: number | null | undefined): string => {
+    if (!age || age <= 0) return 'Возраст не указан';
+    const lastDigit = age % 10;
+    const lastTwoDigits = age % 100;
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) return `${age} лет`;
+    if (lastDigit === 1) return `${age} год`;
+    if (lastDigit >= 2 && lastDigit <= 4) return `${age} года`;
+    return `${age} лет`;
+  };  
 
   // === ПИТОМЦЫ С ПРИОРИТЕТОМ (сначала те, у кого есть задачи) ===
   const sortedPets = [...pets].sort((a, b) => {
@@ -100,6 +122,20 @@ const Dashboard = () => {
     setShowCompleteModal(true);
   };
 
+  // === ОБРАБОТЧИК РЕДАКТИРОВАНИЯ ПИТОМЦА ===
+  const handleEditPet = (pet: any) => {
+    setEditingPet(pet);
+    setShowProfileModal(false);     // закрываем профиль
+    setShowEditPetModal(true);      // открываем редактирование
+  };
+
+  const handleSavePet = async (updatedPet: any) => {
+    // dispatch(updatePet);
+    setShowEditPetModal(false);
+    setEditingPet(null);
+    dispatch(fetchPets() as any); // обновляем список питомцев
+  };
+
   return (
     <div className="p-8">
       <div className="max-w-7xl mx-auto">
@@ -132,7 +168,7 @@ const Dashboard = () => {
                   <div className="flex justify-center mb-4">
                     <div className="w-28 h-28 rounded-3xl overflow-hidden border-4 border-white shadow">
                       <img 
-                        src={pet.photo_url || "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=200"} 
+                        src={pet.photo_url || "/images/Cat_and_dog.png"} 
                         alt={pet.name} 
                         className="w-full h-full object-cover" 
                       />
@@ -140,9 +176,7 @@ const Dashboard = () => {
                   </div>
                   <div className="text-center">
                     <h3 className="text-xl font-bold">{pet.name}</h3>
-                    <p className="text-gray-500 text-sm mt-1">
-                      {pet.age ? `${pet.age} лет` : 'Возраст не указан'}
-                    </p>
+                    <p className="text-gray-500 text-sm mt-1">{formatAge(pet.age)}</p>
                   </div>
                   <div className="mt-3 flex justify-center">
                     {hasTask ? (
@@ -212,7 +246,6 @@ const Dashboard = () => {
           <h2 className="text-2xl font-semibold mb-4">Статистики</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Выполнено задач в этом месяце */}
             <div className="bg-white rounded-3xl p-6 border shadow-sm">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center">
@@ -225,7 +258,6 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Самая частая категория */}
             <div className="bg-white rounded-3xl p-6 border shadow-sm">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-blue-100 rounded-2xl flex items-center justify-center">
@@ -238,7 +270,6 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Дней с последнего визита к ветеринару */}
             <div className="bg-white rounded-3xl p-6 border shadow-sm">
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 bg-purple-100 rounded-2xl flex items-center justify-center">
@@ -246,9 +277,7 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <div className="text-4xl font-bold">{daysSinceLastVet}</div>
-                  <div className="text-gray-600">
-                    {daysWord} с последнего визита к ветеринару
-                  </div>
+                  <div className="text-gray-600">{daysWord} с последнего визита к ветеринару</div>
                 </div>
               </div>
             </div>
@@ -261,13 +290,20 @@ const Dashboard = () => {
         isOpen={showProfileModal}
         onClose={() => setShowProfileModal(false)}
         pet={selectedPet}
-        onEditPet={() => {}}
+        onEditPet={handleEditPet}          
       />
 
       <CompleteTaskModal
         isOpen={showCompleteModal}
         onClose={() => setShowCompleteModal(false)}
         task={selectedTask}
+      />
+      
+      <EditPetModal
+        isOpen={showEditPetModal}
+        onClose={() => setShowEditPetModal(false)}
+        pet={editingPet}
+        onSave={handleSavePet}
       />
     </div>
   );

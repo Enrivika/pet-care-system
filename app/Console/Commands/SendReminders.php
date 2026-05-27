@@ -48,19 +48,26 @@ class SendReminders extends Command
     {
         $user = $event->pet->owner;
 
-        if ($user && $user->notify_email) {
+        if ($user) {
+            // Отправляем уведомление (email + web push)
             $user->notify(new PetReminderNotification($event));
             
-            CustomNotification::create([
-                'user_id'  => $user->id,
-                'pet_id'   => $event->pet_id,
-                'event_id' => $event->id,
-                'type'     => 'reminder',
-                'title'    => 'Напоминание: ' . $event->title,
-                'body'     => 'Задача для ' . $event->pet->name . ' в ' . $event->start_at->format('H:i'),
-            ]);
-            
-            $event->update(['reminder_sent_at' => now()]);
+            // Создаём запись в notifications (если ещё нет)
+            $exists = CustomNotification::where('user_id', $user->id)
+                ->where('event_id', $event->id)
+                ->exists();
+
+            if (!$exists) {
+                CustomNotification::create([
+                    'user_id'  => $user->id,
+                    'pet_id'   => $event->pet_id,
+                    'event_id' => $event->id,
+                    'type'     => 'reminder',
+                    'title'    => 'Напоминание: ' . $event->title,
+                    'body'     => 'Задача для ' . $event->pet->name . ' в ' . $event->start_at->format('H:i'),
+                ]);
+            }
+            $event->update(['reminder_sent_at' => now()]);            
             $sent++;
         }
     }

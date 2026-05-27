@@ -6,10 +6,13 @@ use App\Http\Controllers\Api\PetShareController;
 use App\Http\Controllers\Api\CalendarEventController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\PushSubscriptionController;
 
 // Публичные маршруты (без авторизации)
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
+    ->middleware('throttle:1,1'); // 1 запрос в 1 минуту (можно настроить)
 
 // Защищённые маршруты (требуют токен Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
@@ -51,5 +54,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Обновление профиля
     Route::post('/user/profile', [AuthController::class, 'updateProfile']);
     Route::post('/user/password', [AuthController::class, 'updatePassword']);
+
+    // Web Push подписки
+    Route::post('/push/subscribe', [PushSubscriptionController::class, 'subscribe']);
+    Route::post('/push/unsubscribe', [PushSubscriptionController::class, 'unsubscribe']);
     
 });

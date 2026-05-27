@@ -63,17 +63,23 @@ const Calendar = () => {
       const overdueTasks = events.filter((task: any) => {
         if (task.is_completed) return false;
 
-        const taskDate = new Date(task.start_at);
-        const taskDateOnly = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
-        const taskHours = taskDate.getHours();
-        const taskMinutes = taskDate.getMinutes();
+        // Используем end_at как "момент завершения", если он есть.
+        // Иначе считаем, что задача длится 60 минут от start_at (как делает бэкенд при создании).
+        const startDate = new Date(task.start_at);
+        const endDate = task.end_at ? new Date(task.end_at) : new Date(startDate.getTime() + 60 * 60 * 1000);
 
-        const isAllDayTask = task.is_all_day === true || (taskHours === 0 && taskMinutes === 0);
+        const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        const endHours = endDate.getHours();
+        const endMinutes = endDate.getMinutes();
+
+        const isAllDayTask = task.is_all_day === true || (startDate.getHours() === 0 && startDate.getMinutes() === 0);
 
         if (isAllDayTask) {
-          return taskDateOnly < todayOnly;
+          // Для all-day считаем просроченной, если дата начала уже прошла
+          return startDateOnly < todayOnly;
         } else {
-          return taskDate < now;
+          // Для обычных задач — ждём наступления end_at (или start+1h)
+          return endDate < now;
         }
       });
 

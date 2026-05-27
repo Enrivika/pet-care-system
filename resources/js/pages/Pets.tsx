@@ -167,7 +167,7 @@ const Pets = () => {
   // Векторная графика
   const getPetAvatar = (pet: any) => {
     if (pet.photo_url) return pet.photo_url;
-    return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Ccircle cx='100' cy='100' r='90' fill='%23E8F5E9'/%3E%3Cpath d='M70 80 Q100 60 130 80' fill='none' stroke='%234CAF50' stroke-width='8'/%3E%3Ccircle cx='80' cy='95' r='8' fill='%234CAF50'/%3E%3Ccircle cx='120' cy='95' r='8' fill='%234CAF50'/%3E%3Cpath d='M85 115 Q100 130 115 115' fill='none' stroke='%234CAF50' stroke-width='6'/%3E%3C/svg%3E`;
+    return "/images/Cat_and_dog.png";
   };
 
   // Открытие профиля питомца в попапе

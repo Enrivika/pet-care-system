@@ -69,7 +69,7 @@ const ViewHealthRecordModal = ({ isOpen, onClose, record, onUpdated, onEdit }: V
             <div className="flex items-center gap-4 mb-6">
               <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-white shadow-md flex-shrink-0">
                 <img 
-                  src={record.pet?.photo_url || record.pet?.photo || "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=200"} 
+                  src={record.pet?.photo_url || record.pet?.photo || "/images/Cat_and_dog.png"} 
                   alt={record.pet?.name || 'Питомец'} 
                   className="w-full h-full object-cover"
                 />

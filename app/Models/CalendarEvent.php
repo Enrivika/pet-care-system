@@ -40,4 +40,113 @@ class CalendarEvent extends Model
             ->whereNull('reminder_sent_at')
             ->where('start_at', '>', now());
     }
+
+    public static function existsForPetAndDate(int $petId, string $eventType, $startAt): bool
+    {
+        return self::where('pet_id', $petId)
+            ->where('event_type', $eventType)
+            ->where('start_at', $startAt)
+            ->exists();
+    }
+
+    /**
+     * Вычисляет следующую дату старта на основе правила повторения.
+     * Централизованная логика (раньше дублировалась в контроллере и команде).
+     */
+    public static function calculateNextStart(\Carbon\Carbon $from, ?string $rule): ?\Carbon\Carbon
+    {
+        if (!$rule || $rule === 'none') {
+            return null;
+        }
+
+        $base = $from->copy();
+
+        return match ($rule) {
+            'daily', 'Ежедневно'      => $base->addDay(),
+            'weekdays', 'По будням'   => self::nextWeekday($base),
+            'weekends', 'По выходным' => self::nextWeekend($base),
+            'weekly', 'Еженедельно'   => $base->addWeek(),
+            'monthly', 'Ежемесячно'   => $base->addMonth(),
+            'yearly', 'Ежегодно'      => $base->addYear(),
+            default                   => null,
+        };
+    }
+
+    private static function nextWeekday(\Carbon\Carbon $date): \Carbon\Carbon
+    {
+        $next = $date->copy()->addDay();
+        while ($next->isWeekend()) {
+            $next->addDay();
+        }
+        return $next;
+    }
+
+    private static function nextWeekend(\Carbon\Carbon $date): \Carbon\Carbon
+    {
+        $next = $date->copy()->addDay();
+        while (!$next->isWeekend()) {
+            $next->addDay();
+        }
+        return $next;
+    }
+
+    /**
+     * Создаёт и сохраняет следующее повторение задачи (если повтор включён).
+     * Возвращает созданное событие или null (если повтор не нужен или уже существует).
+     *
+     * Используется и из complete() контроллера, и из команды MarkOverdueTasksAsCompleted.
+     */
+    public function createNextOccurrence(): ?self
+    {
+        if (!$this->is_recurring || !$this->recurrence_rule || $this->recurrence_rule === 'none') {
+            return null;
+        }
+
+        $nextStart = self::calculateNextStart($this->start_at, $this->recurrence_rule);
+        if (!$nextStart) {
+            return null;
+        }
+
+        // Защита от дубликатов (используем существующий хелпер)
+        if (self::existsForPetAndDate($this->pet_id, $this->event_type, $nextStart)) {
+            return null;
+        }
+
+        $durationMinutes = $this->end_at
+            ? $this->start_at->diffInMinutes($this->end_at)
+            : 60;
+
+        $nextEnd = $nextStart->copy()->addMinutes($durationMinutes);
+
+        // replicate() копирует все fillable атрибуты — удобно и безопасно
+        $child = $this->replicate([
+            'id', 'created_at', 'updated_at', 'completed_at', 'reminder_sent_at'
+        ]);
+
+        $child->start_at         = $nextStart;
+        $child->end_at           = $nextEnd;
+        $child->is_completed     = false;
+        $child->completed_at     = null;
+        $child->notes            = null;
+        $child->reminder_sent_at = null;
+        // is_recurring и recurrence_rule уже скопированы через replicate
+
+        $child->save();
+
+        return $child;
+    }
+
+    /**
+     * Возвращает длительность задачи в минутах.
+     * Если end_at не задан — возвращаем стандартные 60 минут (как в store()).
+     * Используется при редактировании, чтобы сохранить исходную длительность при смене start_at.
+     */
+    public function getDurationInMinutes(): int
+    {
+        if ($this->end_at) {
+            return (int) $this->start_at->diffInMinutes($this->end_at);
+        }
+
+        return 60;
+    }
 }

@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 
 const Sidebar = () => {
   const navItems = [
@@ -46,7 +46,7 @@ const Sidebar = () => {
       
       {/* Логотип */}
       <div className="p-6 border-b border-white/10">
-        <div className="flex items-center gap-3">
+        <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
           <img 
             src="/images/Petopia.png" 
             alt="Petopia" 
@@ -63,7 +63,7 @@ const Sidebar = () => {
               Petopia
             </div>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Навигация */}

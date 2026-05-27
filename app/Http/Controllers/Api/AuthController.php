@@ -7,6 +7,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\RateLimiter;
 
 class AuthController extends Controller
 {
@@ -109,4 +112,65 @@ public function register(Request $request)
 
         return response()->json(['message' => 'Пароль успешно изменён']);
     }
+
+    public function forgotPassword(Request $request)
+    {        
+        $request->validate([
+            'email' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                        $fail('Пожалуйста, введите корректный почтовый адрес.');
+                    }
+                },
+            ],
+        ]);
+
+        $key = 'forgot-password:' . $request->ip();
+
+        if (RateLimiter::tooManyAttempts($key, 3)) {
+                $seconds = RateLimiter::availableIn($key);
+                return response()->json([
+                    'message' => "Слишком много попыток. Попробуйте через {$seconds} секунд."
+                ], 429);
+            }
+
+        RateLimiter::hit($key, 60); // 60 секунд = 1 минута  
+
+        // Проверка существования аккаунта
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return response()->json([
+                'message' => 'Аккаунт с такой почтой не обнаружен'
+            ], 404);
+        }
+
+        // Генерация нового случайного пароля
+        $newPassword = \Illuminate\Support\Str::random(10);
+
+        // Обновление пароля в БД
+        $user->update([
+            'password' => \Illuminate\Support\Facades\Hash::make($newPassword)
+        ]);
+
+        // Письмо с новым паролем на почту Пользователя
+        \Illuminate\Support\Facades\Mail::raw(
+            "Здравствуйте, {$user->name}!\n\n" .
+            "Ваш новый пароль для входа в Petopia:\n\n" .
+            "{$newPassword}\n\n" .
+            "Пожалуйста, после входа обязательно смените его в настройках профиля.\n\n" .
+            "С уважением,\nКоманда Petopia",
+            function ($message) use ($user) {
+                $message->to($user->email)
+                        ->subject('Ваш новый пароль для Petopia');
+            }
+        );
+
+        return response()->json([
+            'message' => 'Новый пароль отправлен на вашу почту'
+        ]);
+    }  
 }

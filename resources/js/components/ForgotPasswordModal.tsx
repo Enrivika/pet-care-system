@@ -22,26 +22,33 @@ const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
     setIsLoading(true);
 
     try {
-      // TODO: Подключить реальный API позже
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await api.post('/forgot-password', { email });
       
-      toast.success('Ссылка для сброса пароля отправлена на почту!');
+      toast.success('Новый пароль отправлен на вашу почту!');
       onClose();
       setEmail('');
-    } catch (error) {
-      toast.error('Ошибка при отправке ссылки');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Ошибка при отправке');
     } finally {
       setIsLoading(false);
+    }
+  };
+  
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] px-4">
+    <div 
+      className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] px-4"
+      onClick={handleBackdropClick}
+    >
       <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl relative">
         
-        {/* Иллюстрация */}
         <div className="absolute -top-12 -left-20 z-10">
           <img 
             src="/images/Cat_and_dog.png" 
@@ -55,7 +62,7 @@ const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
         </h2>
         
         <p className="text-center text-gray-600 mb-8 leading-relaxed">
-          Введите ваш email, и мы отправим ссылку<br />для сброса пароля:
+          Введите ваш email, и мы отправим<br />новый пароль на почту:
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -75,11 +82,10 @@ const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
             disabled={isLoading}
             className="w-full py-4 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-lg rounded-2xl transition-all disabled:opacity-70 shadow-lg shadow-emerald-200"
           >
-            {isLoading ? 'Отправка...' : 'Отправить ссылку'}
+            {isLoading ? 'Отправка...' : 'Отправить новый пароль'}
           </button>
         </form>
 
-        {/* Ссылка "Вернуться на страницу входа" */}
         <button 
           onClick={onClose}
           className="block w-full text-center mt-6 text-emerald-600 hover:underline font-medium"

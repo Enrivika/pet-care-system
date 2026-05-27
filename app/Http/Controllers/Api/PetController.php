@@ -35,8 +35,16 @@ class PetController extends Controller
         
         $photoUrl = null;
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('pets', 'public');
-            $photoUrl = Storage::url($path);
+            $file = $request->file('photo');
+            $filename = time() . '_' . $file->getClientOriginalName();
+                        
+            $petsPath = public_path('pets');
+            if (!file_exists($petsPath)) {
+                mkdir($petsPath, 0755, true);
+            }
+            
+            $file->move($petsPath, $filename);
+            $photoUrl = '/pets/' . $filename;
         }
 
         $pet = auth()->user()->pets()->create([
@@ -81,15 +89,24 @@ class PetController extends Controller
         }
 
         // Фото
-        if ($request->hasFile('photo')) {
-            // Удаляем старое фото
-            if ($pet->photo_url) {
-                $oldPath = str_replace('/storage/', '', $pet->photo_url);
-                Storage::disk('public')->delete($oldPath);
+        if ($request->hasFile('photo')) {            
+            if ($pet->photo_url && str_starts_with($pet->photo_url, '/pets/')) {
+                $oldPath = public_path(str_replace('/pets/', 'pets/', $pet->photo_url));
+                if (file_exists($oldPath)) {
+                    unlink($oldPath);
+                }
             }
-
-            $path = $request->file('photo')->store('pets', 'public');
-            $data['photo_url'] = Storage::url($path);
+            
+            $file = $request->file('photo');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            
+            $petsPath = public_path('pets');
+            if (!file_exists($petsPath)) {
+                mkdir($petsPath, 0755, true);
+            }
+            
+            $file->move($petsPath, $filename);
+            $data['photo_url'] = '/pets/' . $filename;
         }
 
         $pet->update($data);

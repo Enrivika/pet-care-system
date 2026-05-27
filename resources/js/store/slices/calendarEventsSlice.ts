@@ -155,11 +155,25 @@ const calendarEventsSlice = createSlice({
         state.events = state.events.filter(e => e.id !== action.payload);
       })
 
-      // Выполнение
+      // Выполнение (сервер может вернуть nextEvent — следующее повторение)
       .addCase(completeTask.fulfilled, (state, action) => {
-        const index = state.events.findIndex(e => e.id === action.payload.id);
+        const payload = action.payload;
+        // Обновляем саму выполненную задачу
+        const index = state.events.findIndex(e => e.id === payload.event?.id);
         if (index !== -1) {
-          state.events[index] = action.payload;
+          state.events[index] = payload.event;
+        } else if (payload.id) {
+          // fallback на старый формат ответа
+          const oldIndex = state.events.findIndex(e => e.id === payload.id);
+          if (oldIndex !== -1) state.events[oldIndex] = payload;
+        }
+
+        // Мгновенно добавляем следующее повторение (если пришло)
+        if (payload.nextEvent) {
+          const alreadyExists = state.events.some(e => e.id === payload.nextEvent.id);
+          if (!alreadyExists) {
+            state.events.push(payload.nextEvent);
+          }
         }
       });
   },

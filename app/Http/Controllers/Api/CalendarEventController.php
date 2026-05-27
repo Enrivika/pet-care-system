@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CalendarEvent;
 use App\Models\Pet;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class CalendarEventController extends Controller
 {
@@ -61,12 +62,21 @@ class CalendarEventController extends Controller
             ? true
             : ($validated['is_medical'] ?? false);
 
+        if (empty($validated['end_at'])) {
+            $validated['end_at'] = \Carbon\Carbon::parse($validated['start_at'])->addHour();
+        }
+
+        // КРИТИЧЕСКИ ВАЖНО: если пользователь выбрал повтор — явно включаем флаг is_recurring.
+        // Раньше флаг никогда не выставлялся из фронтенда → все проверки в complete() и команде проваливались.
+        $isRecurring = !empty($validated['recurrence_rule']) && $validated['recurrence_rule'] !== 'none';
+
         $event = $pet->events()->create([
             ...$validated,
             'created_by' => auth()->id(),
             'is_completed' => $request->boolean('is_completed', false),
             'is_medical' => $isMedical,
             'is_all_day' => $request->boolean('is_all_day'),
+            'is_recurring' => $isRecurring,
             'notes' => $request->input('notes'),
             'completed_at' => $request->input('completed_at'),
             'reminder_minutes' => $request->input('reminder_minutes'),
@@ -109,8 +119,24 @@ class CalendarEventController extends Controller
             ? true
             : ($validated['is_medical'] ?? $event->is_medical);
 
+        // === КЛЮЧЕВАЯ ЛОГИКА: сохранение длительности при смене start_at ===
+        // Если пользователь изменил время начала, но не передал явно новый end_at,
+        // мы должны пересчитать end_at, чтобы длительность задачи осталась прежней.
+        $dataToUpdate = $validated;
+
+        $startAtChanged = array_key_exists('start_at', $validated);
+        $endAtExplicitlySent = $request->has('end_at');
+
+        if ($startAtChanged && !$endAtExplicitlySent) {
+            $newStart = \Carbon\Carbon::parse($validated['start_at']);
+            $duration = $event->getDurationInMinutes();
+
+            // Вычисляем новый end_at на основе исходной длительности
+            $dataToUpdate['end_at'] = $newStart->copy()->addMinutes($duration);
+        }
+
         $event->update([
-            ...$validated,
+            ...$dataToUpdate,
             'is_medical' => $isMedical,
             'is_all_day' => $request->boolean('is_all_day', $event->is_all_day),
             'reminder_minutes' => $request->input('reminder_minutes', $event->reminder_minutes),
@@ -134,75 +160,31 @@ class CalendarEventController extends Controller
         return response()->json(null, 204);
     }
     /**
-     * Выполнить задачу
+     * Отметить задачу выполненной.
+     * Если задача повторяющаяся — автоматически создаёт следующее вхождение.
      */
     public function complete(Request $request, CalendarEvent $event)
     {
         $this->authorize('update', $event->pet);
 
-        // Отмечаем текущую задачу как выполненную
         $event->update([
             'is_completed' => true,
             'completed_at' => now(),
             'notes' => $request->input('notes'),
         ]);
 
-        // === АВТОМАТИЧЕСКОЕ СОЗДАНИЕ СЛЕДУЮЩЕЙ ЗАДАЧИ (ПОВТОР) ===
-        if ($event->recurrence_rule && $event->recurrence_rule !== 'none') {
-            $nextDate = $this->calculateNextDate($event->start_at, $event->recurrence_rule);
+        // Делегируем создание следующего повторения в модель (единая логика)
+        $nextEvent = $event->createNextOccurrence();
 
-            if ($nextDate) {
-                $newTask = $event->replicate(); // копируем все поля
-                $newTask->start_at = $nextDate;
-                $newTask->is_completed = false;
-                $newTask->completed_at = null;
-                $newTask->notes = null;
-                $newTask->save();
-            }
-        }
-
-        return response()->json([
+        $response = [
             'message' => 'Задача выполнена',
-            'event' => $event->load('creator', 'pet')
-        ]);
-    }
+            'event'   => $event->load('creator', 'pet'),
+        ];
 
-    /**
-     * Вычисляет следующую дату на основе правила повтора
-     */
-    private function calculateNextDate(string $startAt, string $recurrence): ?string
-    {
-        $date = new \DateTime($startAt);
-
-        switch ($recurrence) {
-            case 'daily':
-                $date->modify('+1 day');
-                break;
-            case 'weekdays':
-                // Пропускаем выходные
-                do {
-                    $date->modify('+1 day');
-                } while (in_array($date->format('N'), [6, 7]));
-                break;
-            case 'weekends':
-                // Только выходные
-                do {
-                    $date->modify('+1 day');
-                } while (!in_array($date->format('N'), [6, 7]));
-                break;
-            case 'weekly':
-                $date->modify('+1 week');
-                break;
-            case 'monthly':
-                $date->modify('+1 month');
-                break;
-            case 'yearly':
-                $date->modify('+1 year');
-                break;
-            default:
-                return null;
+        if ($nextEvent) {
+            $response['nextEvent'] = $nextEvent->load('creator', 'pet');
         }
 
-        return $date->format('Y-m-d H:i:s');
+        return response()->json($response);
     }
 }

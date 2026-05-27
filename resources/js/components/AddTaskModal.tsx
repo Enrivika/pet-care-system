@@ -7,9 +7,10 @@ import { toast } from 'sonner';
 interface AddTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
+  defaultPetId?: number | string;
 }
 
-const AddTaskModal = ({ isOpen, onClose }: AddTaskModalProps) => {
+const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
   const dispatch = useDispatch();
   const { pets } = useSelector((state: RootState) => state.pets);
 
@@ -29,7 +30,11 @@ const AddTaskModal = ({ isOpen, onClose }: AddTaskModalProps) => {
   // Сброс формы при каждом открытии модалки
   useEffect(() => {
     if (isOpen) {
-      setPetId('');
+      if (defaultPetId){
+        setPetId(defaultPetId.toString());
+      } else {
+        setPetId('');
+      }      
       setCategory('');
       setIsMedical(false);
       setTitle('');
@@ -39,7 +44,7 @@ const AddTaskModal = ({ isOpen, onClose }: AddTaskModalProps) => {
       setRecurrence('none');
       setIsAllDay(false);           // ← Чекбокс "На весь день" всегда выключен
     }
-  }, [isOpen]);
+  }, [isOpen, defaultPetId]);
 
   const handleCategoryChange = (cat: string) => {
     setCategory(cat);

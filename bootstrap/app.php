@@ -19,12 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withSchedule(function (Schedule $schedule) {
-        // Запуск команды отправки напоминаний каждую минуту
+        // Напоминания (email + push) — каждую минуту
         $schedule->command('reminders:send')->everyMinute();
+
+        // Авто-завершение просроченных задач + создание следующих повторений
+        $schedule->command('tasks:mark-overdue')->everyMinute();
     })
-    ->withSchedule(function (Schedule $schedule) {
-        // Автоматический перенос просроченных задач в «Историю»
-        $schedule->command('tasks:mark-overdue')->everyFiveMinutes();
-    })
-    
     ->create();

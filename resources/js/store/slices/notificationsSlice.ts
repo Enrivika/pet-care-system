@@ -15,12 +15,14 @@ interface NotificationsState {
   notifications: Notification[];
   unreadCount: number;
   loading: boolean;
+  isInitialLoad: boolean;
 }
 
 const initialState: NotificationsState = {
   notifications: [],
   unreadCount: 0,
   loading: false,
+  isInitialLoad: true,
 };
 
 // Загрузка уведомлений
@@ -49,6 +51,11 @@ export const markAllAsRead = createAsyncThunk(
   }
 );
 
+export const clearAllNotifications = createAsyncThunk('notifications/clearAll', async () => {
+  await api.delete('/notifications/clear');
+  return true;
+});
+
 const notificationsSlice = createSlice({
   name: 'notifications',
   initialState,
@@ -75,6 +82,10 @@ const notificationsSlice = createSlice({
           ...n,
           read_at: new Date().toISOString()
         }));
+        state.unreadCount = 0;
+      })
+      .addCase(clearAllNotifications.fulfilled, (state) => {
+        state.notifications = [];
         state.unreadCount = 0;
       });
   },

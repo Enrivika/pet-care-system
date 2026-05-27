@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import { Bell, User, RefreshCw } from 'lucide-react';
 import UserProfileModal from './UserProfileModal';
-import { fetchNotifications, markAsRead, markAllAsRead } from '../store/slices/notificationsSlice';
+import { fetchNotifications, markAsRead, markAllAsRead, clearAllNotifications } from '../store/slices/notificationsSlice';
 import { toast } from 'sonner';
 
 const Topbar = () => {
@@ -57,7 +57,13 @@ const Topbar = () => {
 
   const handleClearAll = async () => {
     if (!confirm('Очистить всю историю уведомлений?')) return;
-    toast.success('История очищена (реализуй API если нужно)');
+
+    try {
+      await dispatch(clearAllNotifications() as any).unwrap();
+      toast.success('История уведомлений очищена');
+    } catch (err) {
+      toast.error('Не удалось очистить историю');
+    }
   };
 
   return (
