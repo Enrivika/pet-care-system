@@ -58,6 +58,11 @@ const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProps) => {
       return;
     }
 
+    if (newPassword === currentPassword) {
+      toast.error('Новый пароль не должен совпадать с текущим');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -157,7 +162,7 @@ const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProps) => {
           <div className="space-y-3 pt-4">
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || newPassword === currentPassword}
               className="w-full py-3.5 bg-emerald-500 text-white rounded-2xl font-medium hover:bg-emerald-600 disabled:opacity-70"
             >
               {loading ? 'Сохранение...' : 'Изменить пароль'}

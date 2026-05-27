@@ -24,6 +24,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
 
   // Новое состояние для редактирования полей (по одному за раз)
   const [editingField, setEditingField] = useState<'name' | 'email' | null>(null);
@@ -126,17 +127,23 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
   const handleEmailToggle = async () => {
     const newValue = !emailEnabled;
 
+    setEmailEnabled(newValue);
+    setEmailLoading(true);
+
     try {
       await api.post('/user/profile', {
         name,
         email,
         notify_email: newValue,
       });
-      setEmailEnabled(newValue);
       dispatch(updateUser({ notify_email: newValue }));
       toast.success(newValue ? 'Email-уведомления включены' : 'Email-уведомления отключены');
     } catch (error: any) {
+      // Откатываем визуальное состояние при ошибке
+      setEmailEnabled(!newValue);
       toast.error(error.response?.data?.message || 'Ошибка при сохранении');
+    } finally {
+      setEmailLoading(false);
     }
   };
 
@@ -236,7 +243,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             {/* Имя */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">Имя</label>
-              <div className="flex items-center gap-2 border rounded-2xl px-4 py-3">
+              <div className={`flex items-center gap-2 border rounded-2xl px-4 py-3 transition-colors ${editingField === 'name' ? 'bg-white border-emerald-300' : 'bg-gray-100 border-gray-200'}`}>
                 <button
                   type="button"
                   onClick={() => (editingField === 'name' ? finishEditing() : startEditing('name'))}
@@ -253,7 +260,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={editingField !== 'name'}
-                  className={`flex-1 outline-none ${editingField === 'name' ? 'bg-white' : 'bg-transparent'}`}
+                  className={`flex-1 outline-none bg-transparent ${editingField === 'name' ? 'text-gray-900' : 'text-gray-700'}`}
                 />
               </div>
             </div>
@@ -261,7 +268,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
-              <div className="flex items-center gap-2 border rounded-2xl px-4 py-3">
+              <div className={`flex items-center gap-2 border rounded-2xl px-4 py-3 transition-colors ${editingField === 'email' ? 'bg-white border-emerald-300' : 'bg-gray-100 border-gray-200'}`}>
                 <button
                   type="button"
                   onClick={() => (editingField === 'email' ? finishEditing() : startEditing('email'))}
@@ -278,7 +285,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={editingField !== 'email'}
-                  className={`flex-1 outline-none ${editingField === 'email' ? 'bg-white' : 'bg-transparent'}`}
+                  className={`flex-1 outline-none bg-transparent ${editingField === 'email' ? 'text-gray-900' : 'text-gray-700'}`}
                 />
               </div>
             </div>
@@ -300,7 +307,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
 
               <div className="space-y-4">
                 {/* Push */}
-                <div className="flex items-center justify-between">
+                <div className={`flex items-center justify-between ${pushLoading ? 'opacity-60 pointer-events-none' : ''}`}>
                   <span className="text-sm">Push-уведомления</span>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -315,13 +322,14 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                 </div>
 
                 {/* Email */}
-                <div className="flex items-center justify-between">
+                <div className={`flex items-center justify-between ${emailLoading ? 'opacity-60 pointer-events-none' : ''}`}>
                   <span className="text-sm">Email-уведомления</span>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
                       checked={emailEnabled}
                       onChange={handleEmailToggle}
+                      disabled={emailLoading}
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>

@@ -131,6 +131,11 @@ public function register(Request $request)
             return response()->json(['message' => 'Неверный текущий пароль'], 422);
         }
 
+        // Запрет на установку того же пароля, который уже используется
+        if (Hash::check($validated['new_password'], $user->password)) {
+            return response()->json(['message' => 'Новый пароль не должен совпадать с текущим'], 422);
+        }
+
         $user->update([
             'password' => Hash::make($validated['new_password'])
         ]);

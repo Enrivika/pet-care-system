@@ -36,9 +36,9 @@ class PushSubscriptionController extends Controller
 
         $user = $request->user();
 
-        $user->webPushSubscriptions()
-            ->where('endpoint', $request->endpoint)
-            ->delete();
+        // Используем helper-метод из трейта HasPushSubscriptions.
+        // Метод безопасно обрабатывает ситуацию, когда подписки уже нет.
+        $user->deletePushSubscription($request->endpoint);
 
         return response()->json(['message' => 'Подписка удалена']);
     }

@@ -1,10 +1,11 @@
 // resources/js/utils/pushNotifications.ts
+import { toast } from 'sonner';
 
 const VAPID_PUBLIC_KEY = 'BHPxLisHrbOrX3HDurySLJ7LofgsVMkLyOo4v_FYNHXrtA_RMvbwhUaGyIsRnH0xNQTCtIMDIK6udtFYTsvWbGs';
 
 export async function subscribeToPush(): Promise<boolean> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    alert('Ваш браузер не поддерживает Web Push уведомления');
+    toast.error('Ваш браузер не поддерживает Web Push уведомления');
     return false;
   }
 
@@ -16,7 +17,7 @@ export async function subscribeToPush(): Promise<boolean> {
     // Запрашиваем разрешение
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') {
-      alert('Разрешение на уведомления отклонено');
+      toast.error('Разрешение на уведомления отклонено. Разрешите уведомления в настройках браузера.');
       return false;
     }
 
