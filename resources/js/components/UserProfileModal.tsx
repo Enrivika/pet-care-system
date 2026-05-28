@@ -7,6 +7,7 @@ import api from '../api/axios';
 import ChangePasswordModal from './ChangePasswordModal';
 import { subscribeToPush, unsubscribeFromPush } from '../utils/pushNotifications';
 import { User, Pencil, Check, LogOut } from 'lucide-react';
+import EmailVerificationModal from './EmailVerificationModal';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -29,6 +30,10 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
   // Новое состояние для редактирования полей (по одному за раз)
   const [editingField, setEditingField] = useState<'name' | 'email' | null>(null);
 
+  // Email verification for profile change
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [pendingNewEmail, setPendingNewEmail] = useState<string | null>(null);
+
   // Фото
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -39,7 +44,8 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     if (isOpen && user) {
       setName(user.name || '');
       setEmail(user.email || '');
-      setPushEnabled(user.notify_push ?? true);
+      // Уведомления по умолчанию выключены для всех новых пользователей
+      setPushEnabled(user.notify_push ?? false);
       setEmailEnabled(user.notify_email ?? false);
       setAvatarFile(null);
       setAvatarPreview(null);
@@ -149,6 +155,32 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
 
   // === Сохранение профиля (включая аватар) ===
   const handleSave = async () => {
+    const originalEmail = user?.email;
+
+    // If email has changed, trigger verification instead of direct save.
+    // We set loading=true immediately to prevent the user from clicking "Сохранить изменения" multiple times
+    // (spam protection while waiting for email verification).
+    if (email !== originalEmail) {
+      setLoading(true);
+      setPendingNewEmail(email);
+
+      try {
+        await api.post('/email-verification/send', {
+          email: email,
+          type: 'email_change',
+        });
+
+        setShowEmailVerification(true);
+      } catch (error: any) {
+        toast.error(error.response?.data?.message || 'Не удалось отправить код подтверждения');
+        // Revert email in form and release the button
+        setEmail(originalEmail || '');
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Normal save (name, notifications, avatar)
     setLoading(true);
     try {
       const formData = new FormData();
@@ -165,7 +197,6 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
-      // Обновляем Redux (включая новый avatar)
       dispatch(updateUser(response.data.user));
 
       toast.success('Профиль обновлён!');
@@ -176,6 +207,18 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Called after successful email verification in profile
+  const handleEmailVerificationSuccess = (data: any) => {
+    if (data.user) {
+      dispatch(updateUser(data.user));
+      toast.success('Email успешно изменён и подтверждён!');
+    }
+    setShowEmailVerification(false);
+    setPendingNewEmail(null);
+    // Release the Save button after successful verification
+    setLoading(false);
   };
 
   const handleLogout = () => {
@@ -363,6 +406,22 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
       <ChangePasswordModal
         isOpen={showChangePassword}
         onClose={() => setShowChangePassword(false)}
+      />
+
+      <EmailVerificationModal
+        isOpen={showEmailVerification}
+        onClose={() => {
+          // Important: closing means email change was not verified
+          setShowEmailVerification(false);
+          setPendingNewEmail(null);
+          // Revert the email in the form to original
+          setEmail(user?.email || '');
+          // Release the Save button (spam protection ends when verification modal is dismissed)
+          setLoading(false);
+        }}
+        email={pendingNewEmail || ''}
+        type="email_change"
+        onSuccess={handleEmailVerificationSuccess}
       />
     </>
   );

@@ -47,6 +47,17 @@ const authSlice = createSlice({
       // Также обновляем localStorage, чтобы данные не терялись при перезагрузке
       localStorage.setItem('user', JSON.stringify(state.user));
     },
+    // Used after successful email verification during registration
+    // to set both user and token directly from the verification response.
+    setAuthAfterVerification: (state, action) => {
+      const { user, token } = action.payload;
+      state.user = user;
+      state.token = token;
+      state.isLoading = false;
+      state.error = null;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -66,5 +77,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logout, updateUser } = authSlice.actions;
+export const { logout, updateUser, setAuthAfterVerification } = authSlice.actions;
 export default authSlice.reducer;

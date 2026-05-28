@@ -21,10 +21,15 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Не трогаем 401 с эндпоинтов верификации email — они могут возвращать 401/422
+    // по разным причинам, и мы не хотим убивать сессию пользователя (особенно при смене почты).
+    const url = error.config?.url || '';
+    const isVerificationRoute = url.includes('/email-verification/');
+
+    if (error.response?.status === 401 && !isVerificationRoute) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      window.location.href = '/auth'; // правильный путь к странице авторизации
     }
     return Promise.reject(error);
   }

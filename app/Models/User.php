@@ -52,6 +52,14 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Check if the user's email has been verified.
+     */
+    public function hasVerifiedEmail(): bool
+    {
+        return !is_null($this->email_verified_at);
+    }
+
     public function pets()
     {
         return $this->hasMany(\App\Models\Pet::class, 'owner_id');

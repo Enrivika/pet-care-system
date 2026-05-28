@@ -14,6 +14,11 @@ Route::post('/login',    [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
     ->middleware('throttle:1,1'); // 1 запрос в 1 минуту (можно настроить)
 
+// Email верификация — публичные маршруты
+// (для регистрации код отправляется до создания аккаунта)
+Route::post('/email-verification/send', [AuthController::class, 'sendEmailVerification']);
+Route::post('/email-verification/verify', [AuthController::class, 'verifyEmailCode']);
+
 // Защищённые маршруты (требуют токен Sanctum)
 Route::middleware('auth:sanctum')->group(function () {
 

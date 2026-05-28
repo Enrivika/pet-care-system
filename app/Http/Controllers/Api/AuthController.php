@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Mail;
+use App\Services\EmailVerificationService;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\RateLimiter;
 
@@ -23,10 +24,13 @@ public function register(Request $request)
     ]);
 
     // Создание пользователя с хешированием пароля (bcrypt)
+    // Уведомления по умолчанию ВЫКЛЮЧЕНЫ — пользователь включит их сам в профиле
     $user = User::create([
-        'name' => $validated['name'],
-        'email' => $validated['email'],
-        'password' => Hash::make($validated['password']),
+        'name'         => $validated['name'],
+        'email'        => $validated['email'],
+        'password'     => Hash::make($validated['password']),
+        'notify_email' => false,
+        'notify_push'  => false,
     ]);
 
     // Генерация персонального API-токена Sanctum
@@ -84,8 +88,9 @@ public function register(Request $request)
         $data = [
             'name' => $request->input('name', $user->name),
             'email' => $request->input('email', $user->email),
-            'notify_email' => $request->boolean('notify_email', $user->notify_email ?? true),
-            'notify_push' => $request->boolean('notify_push', $user->notify_push ?? true),
+            // По умолчанию уведомления выключены
+            'notify_email' => $request->boolean('notify_email', $user->notify_email ?? false),
+            'notify_push'  => $request->boolean('notify_push', $user->notify_push ?? false),
         ];
 
         // Обработка загрузки аватара (сохраняем в public/users/, удаляем старый)
@@ -202,5 +207,107 @@ public function register(Request $request)
         return response()->json([
             'message' => 'Новый пароль отправлен на вашу почту'
         ]);
-    }  
+    }
+
+    /**
+     * Отправить код верификации email (для регистрации или смены email).
+     *
+     * Маршрут публичный (вне auth:sanctum), чтобы работала регистрация до создания аккаунта.
+     * Для email_change мы больше не возвращаем 401 (чтобы не сбрасывать сессию через axios interceptor).
+     */
+    public function sendEmailVerification(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'type'  => 'required|in:registration,email_change',
+            'name'  => 'nullable|string|max:255',
+            'password' => 'nullable|string|min:6',
+        ]);
+
+        $userId = null;
+
+        if ($validated['type'] === 'email_change') {
+            // Получаем пользователя даже на публичном маршруте верификации (токен Sanctum в заголовке)
+            $user = $request->user() ?? auth('sanctum')->user();
+
+            if (!$user) {
+                // ВАЖНО: возвращаем 422 вместо 401, чтобы глобальный axios interceptor
+                // не счёл это "смертью сессии" и не выкинул пользователя на экран логина.
+                return response()->json([
+                    'message' => 'Для смены email необходимо быть авторизованным. Обновите страницу и попробуйте снова.'
+                ], 422);
+            }
+
+            $userId = $user->id;
+        }
+
+        $service = app(EmailVerificationService::class);
+
+        try {
+            $registrationData = [];
+            if ($validated['type'] === 'registration') {
+                $registrationData = [
+                    'name' => $validated['name'],
+                    'password' => $validated['password'],
+                ];
+            }
+
+            $service->sendCode(
+                $validated['email'],
+                $userId,
+                $validated['type'],
+                $registrationData
+            );
+
+            return response()->json(['message' => 'Код подтверждения отправлен на email']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 429);
+        }
+    }
+
+    /**
+     * Проверить код верификации.
+     *
+     * Для типа email_change специально убраны жёсткие проверки авторизации (возврат 401),
+     * чтобы изменение почты в профиле не приводило к принудительному выходу из аккаунта.
+     * (Временное упрощение по просьбе пользователя)
+     */
+    public function verifyEmailCode(Request $request)
+    {
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'code'  => 'required|string|size:6',
+            'type'  => 'required|in:registration,email_change',
+        ]);
+
+        // Для смены email раньше была строгая проверка авторизации.
+        // По просьбе пользователя временно убираем жёсткий 401 (который вызывал принудительный релогин через интерцептор).
+        // Безопасность обеспечивается тем, что код отправляется на новый email, и запись создаётся только из профиля авторизованного пользователя.
+        if ($validated['type'] === 'email_change') {
+            // Проверка auth здесь намеренно убрана, чтобы избежать случайных 401 и редиректа на логин.
+            // Если нужно — можно вернуть позже.
+        }
+
+        $service = app(EmailVerificationService::class);
+
+        try {
+            $result = $service->verifyCode($validated['email'], $validated['code'], $validated['type']);
+
+            if ($validated['type'] === 'registration') {
+                // Автоматический логин после успешной регистрации
+                return response()->json([
+                    'message' => 'Email успешно подтверждён',
+                    'user'    => $result['user'],
+                    'token'   => $result['token'],
+                ], 201);
+            } else {
+                return response()->json([
+                    'message' => 'Email успешно изменён',
+                    'user'    => $result['user'],
+                ]);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+    }
 }

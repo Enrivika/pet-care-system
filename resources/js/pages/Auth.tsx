@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import api from '../api/axios';
 import { useDispatch } from 'react-redux';
-import { login } from '../store/slices/authSlice';
+import { login, updateUser, setAuthAfterVerification } from '../store/slices/authSlice';
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
+import EmailVerificationModal from '../components/EmailVerificationModal';
 import { Eye, EyeOff } from 'lucide-react';
 
 const Auth = () => {
@@ -27,6 +28,14 @@ const Auth = () => {
   const [showRegPasswordConfirm, setShowRegPasswordConfirm] = useState(false);
   const [agree, setAgree] = useState(false);
   const [regLoading, setRegLoading] = useState(false);
+
+  // Email verification state
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [pendingRegistration, setPendingRegistration] = useState<{
+    name: string;
+    email: string;
+    password: string;
+  } | null>(null);
 
   useEffect(() => {
     const savedEmail = localStorage.getItem('rememberedEmail');
@@ -73,23 +82,46 @@ const Auth = () => {
     setRegLoading(true);
 
     try {
-      const response = await api.post('/register', {
-        name: regName,
+      // Step 1: Send verification code instead of creating the account immediately
+      await api.post('/email-verification/send', {
         email: regEmail,
+        type: 'registration',
+        name: regName,
         password: regPassword,
         password_confirmation: regPasswordConfirm,
       });
 
-      const { user, token } = response.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      // Step 2: Store pending data and open verification modal
+      setPendingRegistration({
+        name: regName,
+        email: regEmail,
+        password: regPassword,
+      });
+      setShowVerificationModal(true);
 
-      toast.success('Регистрация успешна!');
-      navigate('/dashboard');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Ошибка регистрации');
+      toast.error(error.response?.data?.message || 'Ошибка отправки кода подтверждения');
     } finally {
       setRegLoading(false);
+    }
+  };
+
+  // Called after successful email verification during registration
+  const handleRegistrationVerificationSuccess = (data: any) => {
+    if (data.user && data.token) {
+      // Use dedicated action instead of calling login thunk again.
+      // The verification response already contains a valid token.
+      dispatch(setAuthAfterVerification({ 
+        user: data.user, 
+        token: data.token 
+      }) as any);
+
+      toast.success('Регистрация успешно подтверждена!');
+      setShowVerificationModal(false);
+      setPendingRegistration(null);
+      navigate('/dashboard');
+    } else {
+      toast.error('Не удалось завершить регистрацию после верификации');
     }
   };
 
@@ -208,7 +240,7 @@ const Auth = () => {
                         onClick={() => setShowLoginPassword(!showLoginPassword)}
                         className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
                       >
-                        {showLoginPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        {showLoginPassword ? <Eye size={20} /> : <EyeOff size={20} />}
                       </button>
                     </div>
                   </div>
@@ -292,7 +324,7 @@ const Auth = () => {
                         onClick={() => setShowRegPassword(!showRegPassword)}
                         className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
                       >
-                        {showRegPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        {showRegPassword ? <Eye size={20} /> : <EyeOff size={20} />}
                       </button>
                     </div>
                   </div>
@@ -314,7 +346,7 @@ const Auth = () => {
                         onClick={() => setShowRegPasswordConfirm(!showRegPasswordConfirm)}
                         className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
                       >
-                        {showRegPasswordConfirm ? <EyeOff size={20} /> : <Eye size={20} />}
+                        {showRegPasswordConfirm ? <Eye size={20} /> : <EyeOff size={20} />}
                       </button>
                     </div>
                   </div>
@@ -360,6 +392,17 @@ const Auth = () => {
       <ForgotPasswordModal 
         isOpen={showForgotModal} 
         onClose={() => setShowForgotModal(false)} 
+      />
+
+      <EmailVerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => {
+          setShowVerificationModal(false);
+          setPendingRegistration(null);
+        }}
+        email={pendingRegistration?.email || ''}
+        type="registration"
+        onSuccess={handleRegistrationVerificationSuccess}
       />
     </div>
   );
