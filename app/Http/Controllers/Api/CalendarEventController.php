@@ -62,8 +62,21 @@ class CalendarEventController extends Controller
             ? true
             : ($validated['is_medical'] ?? false);
 
+        $isAllDay = $request->boolean('is_all_day');
+
+        // Для задач "на весь день" end_at должен быть строго на следующий день в 00:00:00.
+        // Обычные задачи по умолчанию длятся 1 час (как было раньше).
         if (empty($validated['end_at'])) {
-            $validated['end_at'] = \Carbon\Carbon::parse($validated['start_at'])->addHour();
+            $start = \Carbon\Carbon::parse($validated['start_at']);
+            if ($isAllDay) {
+                $validated['end_at'] = $start->copy()->startOfDay()->addDay();
+            } else {
+                $validated['end_at'] = $start->copy()->addHour();
+            }
+        } elseif ($isAllDay) {
+            // Даже если end_at пришёл явно — для all-day принудительно нормализуем (по требованию пользователя)
+            $start = \Carbon\Carbon::parse($validated['start_at']);
+            $validated['end_at'] = $start->copy()->startOfDay()->addDay();
         }
 
         // КРИТИЧЕСКИ ВАЖНО: если пользователь выбрал повтор — явно включаем флаг is_recurring.
@@ -75,7 +88,7 @@ class CalendarEventController extends Controller
             'created_by' => auth()->id(),
             'is_completed' => $request->boolean('is_completed', false),
             'is_medical' => $isMedical,
-            'is_all_day' => $request->boolean('is_all_day'),
+            'is_all_day' => $isAllDay,
             'is_recurring' => $isRecurring,
             'notes' => $request->input('notes'),
             'completed_at' => $request->input('completed_at'),
@@ -119,9 +132,13 @@ class CalendarEventController extends Controller
             ? true
             : ($validated['is_medical'] ?? $event->is_medical);
 
+        // Вычисляем финальное значение is_all_day (учитывая возможный toggle в этом запросе)
+        $isAllDay = $request->boolean('is_all_day', $event->is_all_day);
+
         // === КЛЮЧЕВАЯ ЛОГИКА: сохранение длительности при смене start_at ===
         // Если пользователь изменил время начала, но не передал явно новый end_at,
         // мы должны пересчитать end_at, чтобы длительность задачи осталась прежней.
+        // Для all-day — всегда принудительно ставим "следующий день 00:00".
         $dataToUpdate = $validated;
 
         $startAtChanged = array_key_exists('start_at', $validated);
@@ -129,10 +146,27 @@ class CalendarEventController extends Controller
 
         if ($startAtChanged && !$endAtExplicitlySent) {
             $newStart = \Carbon\Carbon::parse($validated['start_at']);
-            $duration = $event->getDurationInMinutes();
 
-            // Вычисляем новый end_at на основе исходной длительности
-            $dataToUpdate['end_at'] = $newStart->copy()->addMinutes($duration);
+            if ($isAllDay) {
+                $dataToUpdate['end_at'] = $newStart->copy()->startOfDay()->addDay();
+            } else {
+                // При переходе из all-day в обычную timed-задачу (снята галочка "На весь день")
+                // НЕЛЬЗЯ использовать старую длительность all-day (~1440 мин).
+                // Сбрасываем на дефолт 60 минут (как при создании обычной задачи).
+                $duration = $event->is_all_day ? 60 : $event->getDurationInMinutes();
+                // Вычисляем новый end_at на основе (возможно сброшенной) длительности
+                $dataToUpdate['end_at'] = $newStart->copy()->addMinutes($duration);
+            }
+        }
+
+        // Если итоговое состояние задачи — all-day, гарантируем правильный end_at
+        // (покрывает: смена даты + просто переключение чекбокса + случай, когда end_at был отправлен явно).
+        if ($isAllDay) {
+            $startForEnd = isset($dataToUpdate['start_at'])
+                ? \Carbon\Carbon::parse($dataToUpdate['start_at'])
+                : $event->start_at;
+
+            $dataToUpdate['end_at'] = $startForEnd->copy()->startOfDay()->addDay();
         }
 
         // КРИТИЧЕСКИ ВАЖНО: при редактировании тоже явно вычисляем is_recurring,
@@ -148,12 +182,17 @@ class CalendarEventController extends Controller
             ...$dataToUpdate,
             'is_recurring' => $isRecurring,
             'is_medical' => $isMedical,
-            'is_all_day' => $request->boolean('is_all_day', $event->is_all_day),
-            'reminder_minutes' => $request->input('reminder_minutes', $event->reminder_minutes),
+            'is_all_day' => $isAllDay,
+            // Важно: используем has(), чтобы отличать "пользователь явно выбрал 'Без напоминания'" (прислал ключ, значение null)
+            // от "ключ не был прислан" (оставляем старое значение).
+            'reminder_minutes' => $request->has('reminder_minutes')
+                ? $request->input('reminder_minutes')
+                : $event->reminder_minutes,
             'reminder_sent_at' => $request->has('reminder_minutes') ? null : $event->reminder_sent_at,
         ]);
 
-        // Если изменили время напоминания — сбрасываем флаг отправки
+        // Дублирующий сброс на случай, если в будущем логика изменится.
+        // Сбрасываем флаг отправки напоминания при любом явном изменении поля (в т.ч. при установке null).
         if ($request->has('reminder_minutes')) {
             $event->update(['reminder_sent_at' => null]);
         }        

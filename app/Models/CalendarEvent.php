@@ -112,28 +112,48 @@ class CalendarEvent extends Model
             return null;
         }
 
-        $durationMinutes = $this->end_at
-            ? $this->start_at->diffInMinutes($this->end_at)
-            : 60;
-
-        $nextEnd = $nextStart->copy()->addMinutes($durationMinutes);
-
         // replicate() копирует все fillable атрибуты — удобно и безопасно
         $child = $this->replicate([
             'id', 'created_at', 'updated_at', 'completed_at', 'reminder_sent_at'
         ]);
 
         $child->start_at         = $nextStart;
-        $child->end_at           = $nextEnd;
         $child->is_completed     = false;
         $child->completed_at     = null;
         $child->notes            = null;
         $child->reminder_sent_at = null;
         // is_recurring и recurrence_rule уже скопированы через replicate
 
+        // Важно: для all-day задач принудительно ставим end_at = следующий день 00:00,
+        // чтобы recurring children тоже имели правильную семантику (а не наследовали возможную старую 1-часовую длительность).
+        if ($child->is_all_day) {
+            $child->normalizeAllDayEndAt();
+        } else {
+            $durationMinutes = $this->end_at
+                ? $this->start_at->diffInMinutes($this->end_at)
+                : 60;
+            $child->end_at = $nextStart->copy()->addMinutes($durationMinutes);
+        }
+
         $child->save();
 
         return $child;
+    }
+
+    /**
+     * Нормализует end_at для задач "на весь день".
+     * Если is_all_day = true, end_at должен указывать на следующий календарный день ровно в 00:00:00
+     * (исключающий конец дня). Это обеспечивает корректную семантику, overdue-логику и повторения.
+     */
+    public function normalizeAllDayEndAt(): void
+    {
+        if (!$this->is_all_day || !$this->start_at) {
+            return;
+        }
+
+        $this->end_at = \Carbon\Carbon::parse($this->start_at)
+            ->startOfDay()
+            ->addDay();
     }
 
     /**

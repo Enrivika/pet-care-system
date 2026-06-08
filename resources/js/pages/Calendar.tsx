@@ -63,20 +63,22 @@ const Calendar = () => {
       const overdueTasks = events.filter((task: any) => {
         if (task.is_completed) return false;
 
-        // Используем end_at как "момент завершения", если он есть.
-        // Иначе считаем, что задача длится 60 минут от start_at (как делает бэкенд при создании).
+        // Используем end_at как "момент завершения".
+        // Для задач "на весь день" (is_all_day) бэкенд гарантирует end_at = дата_начала + 1 день 00:00:00.
+        // Фолбэк +1 час сохранён для legacy-записей, созданных до исправления.
         const startDate = new Date(task.start_at);
         const endDate = task.end_at ? new Date(task.end_at) : new Date(startDate.getTime() + 60 * 60 * 1000);
 
         const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-        const endHours = endDate.getHours();
-        const endMinutes = endDate.getMinutes();
 
+        // Определяем all-day по флагу из БД (или по 00:00 у start для обратной совместимости)
         const isAllDayTask = task.is_all_day === true || (startDate.getHours() === 0 && startDate.getMinutes() === 0);
 
         if (isAllDayTask) {
-          // Для all-day считаем просроченной, если дата начала уже прошла
-          return startDateOnly < todayOnly;
+          // Для all-day после исправления end_at указывает на следующую полночь.
+          // Используем endDate < now (надежно после нормализации на бэкенде).
+          // Для совсем старых записей без end_at оставляем fallback на дату начала.
+          return endDate < now || startDateOnly < todayOnly;
         } else {
           // Для обычных задач — ждём наступления end_at (или start+1h)
           return endDate < now;

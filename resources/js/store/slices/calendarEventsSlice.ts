@@ -9,6 +9,7 @@ export interface CalendarEvent {
   event_type: string;
   start_at: string;
   end_at?: string;
+  is_all_day?: boolean;
   is_recurring: boolean;
   recurrence_rule?: string;
   reminder_minutes?: number;
@@ -73,9 +74,11 @@ export const updateTask = createAsyncThunk(
     try {
       const dataToSend = { ...data };
 
-      // Унифицируем поведение: если reminder_minutes null или 'none' — удаляем ключ
+      // Для обновления (в отличие от создания) при "Без напоминания" мы должны ЯВНО отправить null,
+      // чтобы бэкенд понял намерение очистить поле (иначе ключ отсутствует → $request->has()=false → откат к старому значению).
+      // Для create можно удалять ключ (бэкенд обработает как null).
       if (data.reminder_minutes == null || data.reminder_minutes === 'none') {
-        delete dataToSend.reminder_minutes;
+        dataToSend.reminder_minutes = null;   // явно шлём null для update
       } else {
         dataToSend.reminder_minutes = Number(data.reminder_minutes);
       }

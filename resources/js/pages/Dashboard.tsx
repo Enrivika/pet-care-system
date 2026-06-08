@@ -108,13 +108,24 @@ const Dashboard = () => {
     return emojis[category] || '📋';
   };
 
-  const formatTaskTime = (startAt: string) => {
+  const formatTaskTime = (task: any) => {
+    const startAt = task.start_at;
+    const isAllDay = !!task.is_all_day;
+
     const date = new Date(startAt);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const taskDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const diffDays = Math.floor((taskDay.getTime() - today.getTime()) / (1000 * 3600 * 24));
     const time = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+    // Специальная обработка для задач "На весь день":
+    // Вместо "Сегодня, в 00:00" показываем "Сегодня, до конца дня" (как просил пользователь).
+    if (isAllDay) {
+      if (diffDays === 0) return `Сегодня, до конца дня`;
+      if (diffDays === 1) return `Завтра, до конца дня`;
+      return `${date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}, до конца дня`;
+    }
 
     if (diffDays === 0) return `Сегодня, в ${time}`;
     if (diffDays === 1) return `Завтра, в ${time}`;
@@ -418,7 +429,7 @@ const Dashboard = () => {
                           className="inline-flex items-center justify-center leading-none px-2.5 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 text-[10px] sm:text-xs md:text-sm font-medium rounded-full text-white whitespace-nowrap tracking-tight"
                           style={{ backgroundColor: catColor, fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
                         >
-                          {formatTaskTime(task.start_at)}
+                          {formatTaskTime(task)}
                         </div>
                       </div>
                     </div>
