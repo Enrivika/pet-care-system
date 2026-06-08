@@ -152,8 +152,14 @@ const EmailVerificationModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[120]">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 relative">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[120]"
+      onClick={handleClose}
+    >
+      <div 
+        className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 relative mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           onClick={handleClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"

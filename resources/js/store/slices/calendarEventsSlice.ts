@@ -104,9 +104,15 @@ export const deleteTask = createAsyncThunk(
 // Выполнение события
 export const completeTask = createAsyncThunk(
   'calendar/completeTask',
-  async ({ id, notes }: { id: number; notes?: string }, { rejectWithValue }) => {
+  async (
+    { id, notes, keep_recurring }: { id: number; notes?: string; keep_recurring?: boolean },
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await api.patch(`/calendar-events/${id}/complete`, { notes });
+      const response = await api.patch(`/calendar-events/${id}/complete`, {
+        notes,
+        keep_recurring,
+      });
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Ошибка выполнения задачи');

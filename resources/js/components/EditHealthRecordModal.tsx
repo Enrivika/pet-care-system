@@ -88,8 +88,14 @@ const EditHealthRecordModal = ({ isOpen, onClose, record, onSuccess, pets }: Edi
   if (!isOpen || !record) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-xl">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-xl mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="px-8 pt-8 pb-6">
           <h2 className="text-2xl font-bold text-center mb-6">Редактирование медицинской записи</h2>
 

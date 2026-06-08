@@ -31,6 +31,13 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
 
   const medicalCategories = ['Лекарство', 'Ветеринар', 'Укол'];
 
+  // Получаем сегодняшнюю дату в UTC (YYYY-MM-DD)
+  // Используем UTC, чтобы ограничение дат при редактировании истории работало последовательно с остальной логикой
+  const getTodayUTCDateString = (): string => {
+    const now = new Date();
+    return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+  };
+
   const categories = [
     { name: 'Кормление', color: 'bg-orange-100 text-orange-700' },
     { name: 'Поение', color: 'bg-blue-100 text-blue-700' },
@@ -99,6 +106,23 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
 
   const handleSubmit = async () => {
 
+    const todayUTC = getTodayUTCDateString();
+
+    // Для выполненных задач (история) — только прошедшие даты
+    if (isCompleted) {
+      if (date > todayUTC) {
+        toast.error('Для выполненных задач нельзя выбирать дату в будущем');
+        return;
+      }
+    } 
+    // Для запланированных задач — только сегодняшние и будущие даты
+    else {
+      if (date < todayUTC) {
+        toast.error('Для запланированных задач нельзя выбирать дату в прошлом');
+        return;
+      }
+    }
+
     const startAt = time 
       ? `${date}T${time}:00` 
       : `${date}T00:00:00`;
@@ -144,9 +168,21 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
 
   if (!isOpen || !task) return null;
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-xl">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={handleBackdropClick}
+    >
+      <div 
+        className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-xl mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="px-8 pt-8 pb-6">
           <h2 className="text-2xl font-bold text-center mb-6">
             {isCompleted ? 'Редактирование выполненной задачи' : 'Редактировать задачу'}
@@ -239,6 +275,10 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
                 onChange={(e) => setDate(e.target.value)}
                 className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 required
+                {...(isCompleted 
+                  ? { max: getTodayUTCDateString() } 
+                  : { min: getTodayUTCDateString() }
+                )}
               />
             </div>
             

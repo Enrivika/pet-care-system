@@ -34,7 +34,7 @@ const PetProfile = () => {
 
   if (!pet) {
     return (
-      <div className="p-8 text-center">
+      <div className="p-4 md:p-8 text-center">
         <h2 className="text-2xl font-bold mb-4">Питомец не найден</h2>
         <Link to="/pets" className="text-emerald-600 hover:underline">Вернуться к списку питомцев</Link>
       </div>
@@ -61,11 +61,11 @@ const PetProfile = () => {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
         {/* Шапка профиля */}
-        <div className="flex items-center gap-6 mb-8">
-          <div className="w-28 h-28 bg-emerald-100 rounded-3xl overflow-hidden border-4 border-white shadow-md flex-shrink-0">
+        <div className="flex items-center gap-4 md:gap-6 mb-6 md:mb-8">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 bg-emerald-100 rounded-3xl overflow-hidden border-4 border-white shadow-md flex-shrink-0">
             <img 
               src={pet.photo_url || `https://picsum.photos/id/${pet.id}/200/200`} 
               alt={pet.name}
@@ -75,7 +75,7 @@ const PetProfile = () => {
 
           <div className="flex-1">
             <div className="flex items-center gap-3">
-              <h1 className="text-4xl font-bold">{pet.name}</h1>
+              <h1 className="text-2xl md:text-4xl font-bold">{pet.name}</h1>
               <span className="px-4 py-1 bg-emerald-100 text-emerald-700 text-sm font-medium rounded-full">
                 {pet.species === 'cat' ? '🐱 Кошка' : pet.species === 'dog' ? '🐶 Собака' : '🐾 Питомец'}
               </span>

@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import api from '../api/axios';
 import ChangePasswordModal from './ChangePasswordModal';
 import { subscribeToPush, unsubscribeFromPush } from '../utils/pushNotifications';
-import { User, Pencil, Check, LogOut } from 'lucide-react';
+import { User, Pencil, Check, LogOut, Trash2 } from 'lucide-react';
 import EmailVerificationModal from './EmailVerificationModal';
 
 interface UserProfileModalProps {
@@ -37,6 +37,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
   // Фото
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [removeAvatar, setRemoveAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Загружаем актуальные данные при открытии
@@ -49,7 +50,11 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
       setEmailEnabled(user.notify_email ?? false);
       setAvatarFile(null);
       setAvatarPreview(null);
+      setRemoveAvatar(false);
       setEditingField(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   }, [isOpen, user]);
 
@@ -68,12 +73,23 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Максимальный размер аватарки — 5 МБ
+    const MAX_SIZE = 5 * 1024 * 1024;
+
     if (!file.type.startsWith('image/')) {
       toast.error('Пожалуйста, выберите изображение');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    if (file.size > MAX_SIZE) {
+      toast.error('Файл слишком большой. Максимальный размер аватарки — 5 МБ.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
     setAvatarFile(file);
+    setRemoveAvatar(false);
 
     // Превью
     const reader = new FileReader();
@@ -83,7 +99,26 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     reader.readAsDataURL(file);
   };
 
-  const currentAvatarSrc = avatarPreview || (user?.avatar ? user.avatar : null);
+  // Удаление аватара (или отмена выбора нового)
+  const handleRemoveAvatar = () => {
+    if (avatarFile || avatarPreview) {
+      // Отменяем выбор нового файла
+      setAvatarFile(null);
+      setAvatarPreview(null);
+    } else if (user?.avatar) {
+      setRemoveAvatar(true);
+    }
+    // Сбрасываем value инпута, чтобы можно было выбрать тот же файл повторно
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleCancelRemoval = () => {
+    setRemoveAvatar(false);
+  };
+
+  const currentAvatarSrc = avatarPreview || (user?.avatar && !removeAvatar ? user.avatar : null);
 
   // === Inline editing для имени и email ===
   const startEditing = (field: 'name' | 'email') => {
@@ -191,6 +226,8 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
 
       if (avatarFile) {
         formData.append('avatar', avatarFile);
+      } else if (removeAvatar) {
+        formData.append('remove_avatar', '1');
       }
 
       const response = await api.post('/user/profile', formData, {
@@ -202,8 +239,30 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
       toast.success('Профиль обновлён!');
       setAvatarFile(null);
       setAvatarPreview(null);
+      setRemoveAvatar(false);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Ошибка обновления профиля');
+      const data = error.response?.data;
+      let errorMsg = data?.message || 'Ошибка обновления профиля';
+
+      // Если это ошибка валидации — берём первое сообщение из errors
+      if (data?.errors) {
+        const firstKey = Object.keys(data.errors)[0];
+        const firstErr = data.errors[firstKey];
+        if (Array.isArray(firstErr) && firstErr[0]) {
+          errorMsg = firstErr[0];
+        }
+      }
+
+      // Переводим типичные английские сообщения Laravel на русский
+      if (typeof errorMsg === 'string') {
+        if (errorMsg.includes('must not be greater than') || errorMsg.includes('kilobytes')) {
+          errorMsg = 'Файл слишком большой. Максимальный размер аватарки — 5 МБ.';
+        } else if (errorMsg.toLowerCase().includes('the given data was invalid')) {
+          errorMsg = 'Пожалуйста, проверьте введённые данные.';
+        }
+      }
+
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -237,7 +296,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
         onClick={handleBackdropClick}
       >
         <div
-          className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative"
+          className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative mx-4"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Кнопка закрытия */}
@@ -263,11 +322,33 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                 )}
               </div>
 
+              {/* Кнопка удаления сохранённого аватара */}
+              {user?.avatar && !removeAvatar && !avatarPreview && (
+                <button
+                  onClick={handleRemoveAvatar}
+                  className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full shadow flex items-center justify-center"
+                  title="Удалить фото"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
+
+              {/* Кнопка отмены выбора нового фото */}
+              {(avatarFile || avatarPreview) && (
+                <button
+                  onClick={handleRemoveAvatar}
+                  className="absolute -top-1 -right-1 bg-gray-500 hover:bg-gray-600 text-white p-1.5 rounded-full shadow flex items-center justify-center"
+                  title="Отменить выбор"
+                >
+                  <span className="text-[10px] leading-none font-bold">✕</span>
+                </button>
+              )}
+
               <button
                 onClick={handleAvatarButtonClick}
                 className="absolute -bottom-1 -right-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-3 py-1 rounded-full flex items-center gap-1 shadow"
               >
-                Загрузить фото
+                {currentAvatarSrc ? 'Изменить фото' : 'Загрузить фото'}
               </button>
 
               <input
@@ -278,6 +359,19 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                 onChange={handleAvatarChange}
               />
             </div>
+
+            {/* Подсказка при удалении */}
+            {removeAvatar && (
+              <div className="mt-2 flex items-center gap-2 text-center">
+                <span className="text-xs text-red-600">Фото будет удалено при сохранении</span>
+                <button
+                  onClick={handleCancelRemoval}
+                  className="text-xs text-emerald-600 hover:underline"
+                >
+                  Отменить
+                </button>
+              </div>
+            )}
 
             <h2 className="text-2xl font-bold mt-4">Личные данные</h2>
           </div>

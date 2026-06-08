@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Адаптивные улучшения для разных экранов (телевизор/ПК/планшет/телефон) */
+/* Переопределяем react-calendar (используется в /calendar) чтобы на узких экранах (<350px) не было горизонтального скролла */
+.react-calendar {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+/* Базовые гарантии для body/html: без принудительной min-width, fluid на всех устройствах */
+html, body {
+  min-width: 0;
+  width: 100%;
+  overflow-x: hidden;
+}

@@ -71,8 +71,14 @@ const NotificationsModal = ({ isOpen, onClose }: NotificationsModalProps) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-start justify-end z-[100] pt-16 pr-4">
-      <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-start justify-end z-[100] pt-16 pr-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden mx-2"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Заголовок */}
         <div className="px-6 py-4 border-b flex items-center justify-between">
           <h2 className="text-xl font-bold">Уведомления</h2>

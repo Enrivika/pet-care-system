@@ -177,17 +177,17 @@ const Pets = () => {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 md:mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900">Мои питомцы</h1>
-            <p className="text-gray-600 mt-1">Управляйте профилями своих любимцев</p>
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900">Мои питомцы</h1>
+            <p className="text-gray-600 mt-1 text-sm md:text-base">Управляйте профилями своих любимцев</p>
           </div>
 
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 flex items-center gap-2"
+            className="px-4 py-2 sm:px-6 sm:py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 flex items-center gap-2 text-sm sm:text-base w-fit"
           >
             + Добавить питомца
           </button>
@@ -227,7 +227,7 @@ const Pets = () => {
                   className="bg-white rounded-3xl p-6 border shadow-sm hover:shadow-lg transition-all cursor-pointer relative group"
                 >
                   <div className="flex justify-center mb-4">
-                    <div className="w-32 h-32 rounded-3xl overflow-hidden border-4 border-white shadow-md">
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-3xl overflow-hidden border-4 border-white shadow-md">
                       <img
                         src={getPetAvatar(pet)}
                         alt={pet.name}
@@ -273,8 +273,18 @@ const Pets = () => {
 
       {/* Модалка добавления питомца */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl w-full max-w-md p-8">
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowAddModal(false);
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-3xl w-full max-w-md p-8 mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2 className="text-2xl font-bold text-center mb-6">Добавление питомца</h2>
 
             <div className="space-y-5">
@@ -333,8 +343,19 @@ const Pets = () => {
 
       {/* Модалка редактирования питомца (из списка) */}
       {showEditModal && editingPet && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl w-full max-w-md p-8">
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowEditModal(false);
+              setEditingPet(null);
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-3xl w-full max-w-md p-8 mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h2 className="text-2xl font-bold text-center mb-6">Редактирование питомца</h2>
 
             <div className="space-y-5">

@@ -87,7 +87,7 @@ const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProps) => {
       onClick={handleBackdropClick}
     >
       <div
-        className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8"
+        className="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-2xl font-bold text-center mb-6">Смена пароля</h2>

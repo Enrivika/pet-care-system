@@ -136,18 +136,18 @@ const HealthRecords = () => {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="max-w-5xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 md:mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900">Медицинский журнал</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900">Медицинский журнал</h1>
+            <p className="text-gray-600 mt-1 text-sm md:text-base">
               Всего {records.length} записей в истории медицинских записей
             </p>
           </div>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 flex items-center gap-2"
+            className="px-4 py-2 sm:px-6 sm:py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 flex items-center gap-2 text-sm sm:text-base w-fit"
           >
             + Добавить запись
           </button>
@@ -174,7 +174,7 @@ const HealthRecords = () => {
                   </div>
 
                   {/* Дата и время */}
-                  <div className="w-36 text-sm flex-shrink-0 text-center">
+                  <div className="w-20 sm:w-28 md:w-36 text-sm flex-shrink-0 text-center">
                     {(() => {
                       const { dateLabel, timeStr } = formatDateLabel(record);
                       return (

@@ -23,7 +23,7 @@ class PetController extends Controller
             'species' => 'nullable|string',
             'breed' => 'nullable|string',
             'age' => 'nullable|integer|min:0|max:200',
-            'photo' => 'nullable|image|max:2048',
+            'photo' => 'nullable|image|max:5120',
             'weight' => 'nullable|numeric',
             'notes' => 'nullable|string',
         ]);
@@ -73,7 +73,7 @@ class PetController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'age' => 'nullable|integer|min:0|max:200',
-            'photo' => 'nullable|image|max:2048',
+            'photo' => 'nullable|image|max:5120',
         ]);
 
         $data = [];

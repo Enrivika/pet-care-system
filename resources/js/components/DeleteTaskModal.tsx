@@ -36,8 +36,14 @@ const DeleteTaskModal = ({ isOpen, onClose, task, onSuccess }: DeleteTaskModalPr
   if (!isOpen || !task) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200]">
-      <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-xl">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200]"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-white rounded-3xl w-full max-w-md p-8 shadow-xl mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h2 className="text-2xl font-bold text-red-600 text-center mb-4">Удалить задачу?</h2>
         
         <p className="text-gray-600 text-center mb-8">

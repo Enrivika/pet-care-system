@@ -47,7 +47,7 @@ const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
       className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] px-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl relative">
+      <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl relative mx-4">
         
         <div className="absolute -top-12 -left-20 z-10">
           <img 

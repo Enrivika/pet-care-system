@@ -135,8 +135,18 @@ class CalendarEventController extends Controller
             $dataToUpdate['end_at'] = $newStart->copy()->addMinutes($duration);
         }
 
+        // КРИТИЧЕСКИ ВАЖНО: при редактировании тоже явно вычисляем is_recurring,
+        // иначе при добавлении повтора через редактирование флаг остаётся false
+        // и createNextOccurrence() не создаёт следующую задачу.
+        $recurrenceRule = array_key_exists('recurrence_rule', $validated)
+            ? $validated['recurrence_rule']
+            : $event->recurrence_rule;
+
+        $isRecurring = !empty($recurrenceRule) && $recurrenceRule !== 'none';
+
         $event->update([
             ...$dataToUpdate,
+            'is_recurring' => $isRecurring,
             'is_medical' => $isMedical,
             'is_all_day' => $request->boolean('is_all_day', $event->is_all_day),
             'reminder_minutes' => $request->input('reminder_minutes', $event->reminder_minutes),
@@ -161,19 +171,43 @@ class CalendarEventController extends Controller
     }
     /**
      * Отметить задачу выполненной.
-     * Если задача повторяющаяся — автоматически создаёт следующее вхождение.
+     *
+     * Если задача повторяющаяся — автоматически создаёт следующее вхождение
+     * (кроме случая, когда пользователь явно отключил повтор при завершении).
+     *
+     * Поддерживает параметр keep_recurring:
+     * - true (по умолчанию) — повтор остаётся, следующая задача будет создана
+     * - false — is_recurring и recurrence_rule сбрасываются у текущей задачи,
+     *           следующее повторение не создаётся.
      */
     public function complete(Request $request, CalendarEvent $event)
     {
         $this->authorize('update', $event->pet);
 
+        $validated = $request->validate([
+            'notes'          => 'nullable|string',
+            'keep_recurring' => 'sometimes|boolean',
+        ]);
+
         $event->update([
             'is_completed' => true,
             'completed_at' => now(),
-            'notes' => $request->input('notes'),
+            'notes'        => $validated['notes'] ?? null,
         ]);
 
-        // Делегируем создание следующего повторения в модель (единая логика)
+        // === Логика отключения повторения по желанию пользователя ===
+        // По умолчанию (true) — повтор остаётся. Если фронтенд передал false — выключаем.
+        $keepRecurring = $request->boolean('keep_recurring', true);
+
+        if ($keepRecurring === false) {
+            $event->update([
+                'is_recurring'    => false,
+                'recurrence_rule' => null,
+            ]);
+        }
+
+        // Делегируем создание следующего повторения в модель.
+        // Метод createNextOccurrence() сам проверит is_recurring и recurrence_rule.
         $nextEvent = $event->createNextOccurrence();
 
         $response = [

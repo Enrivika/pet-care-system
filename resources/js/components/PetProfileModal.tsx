@@ -150,9 +150,21 @@ const PetProfileModal = ({ isOpen, onClose, pet, onEditPet }: PetProfileModalPro
     setShowDeleteModal(true);
   };
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
-      <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-xl flex flex-col">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4"
+      onClick={handleBackdropClick}
+    >
+      <div 
+        className="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-xl flex flex-col mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Шапка профиля */}
         <div className="p-8 border-b flex items-center gap-6">
           <div className="w-24 h-24 rounded-3xl overflow-hidden border-4 border-white shadow-md flex-shrink-0">
@@ -232,7 +244,7 @@ const PetProfileModal = ({ isOpen, onClose, pet, onEditPet }: PetProfileModalPro
                           </div>
 
                           {/* Дата и время (по центру) */}
-                          <div className="w-36 text-sm flex-shrink-0 text-center">
+                          <div className="w-28 md:w-36 text-sm flex-shrink-0 text-center">
                             <div className="font-medium text-gray-900">{dateLabel}</div>
                             {timeLabel && (
                               <div className="text-gray-500 text-xs mt-0.5">в {timeLabel}</div>
@@ -322,7 +334,7 @@ const PetProfileModal = ({ isOpen, onClose, pet, onEditPet }: PetProfileModalPro
                             </div>
 
                             {/* Дата и время — по центру */}
-                            <div className="w-28 flex-shrink-0 text-sm text-center">
+                            <div className="w-20 md:w-28 flex-shrink-0 text-sm text-center">
                               <div className="font-medium text-gray-900">{dateLabel}</div>
                               {timeLabel && (
                                 <div className="text-gray-500 text-xs">({timeLabel})</div>

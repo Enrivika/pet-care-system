@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { completeTask, fetchAllTasks } from '../store/slices/calendarEventsSlice';
 import { toast } from 'sonner';
@@ -12,15 +12,48 @@ interface CompleteTaskModalProps {
 const CompleteTaskModal = ({ isOpen, onClose, task }: CompleteTaskModalProps) => {
   const dispatch = useDispatch();
   const [notes, setNotes] = useState('');
+  const [keepRecurring, setKeepRecurring] = useState(true);
+
+  // Сбрасываем состояние при каждом открытии модалки или при смене задачи
+  useEffect(() => {
+    if (isOpen) {
+      setNotes('');
+      setKeepRecurring(true); // всегда по умолчанию "продолжать повтор"
+    }
+  }, [isOpen, task?.id]);
+
+  // Дополнительная защита: если задача внезапно перестала быть повторяющейся — сбрасываем выбор
+  useEffect(() => {
+    if (!task?.is_recurring) {
+      setKeepRecurring(true);
+    }
+  }, [task?.is_recurring]);
+
+  const handleClose = () => {
+    onClose();
+    setNotes('');
+    setKeepRecurring(true);
+  };
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleClose();
+    }
+  };
 
   const handleComplete = async () => {
     try {
-      await dispatch(completeTask({ id: task.id, notes: notes.trim() || undefined }) as any).unwrap();
+      await dispatch(
+        completeTask({
+          id: task.id,
+          notes: notes.trim() || undefined,
+          keep_recurring: task.is_recurring ? keepRecurring : undefined,
+        }) as any
+      ).unwrap();
+
       toast.success('Задача отмечена как выполненная!');
-      
       dispatch(fetchAllTasks() as any);
-      onClose();
-      setNotes('');
+      handleClose();
     } catch (err: any) {
       toast.error(err || 'Ошибка выполнения задачи');
     }
@@ -53,8 +86,14 @@ const CompleteTaskModal = ({ isOpen, onClose, task }: CompleteTaskModalProps) =>
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-xl">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={handleBackdropClick}
+    >
+      <div 
+        className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-xl mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="px-8 pt-8 pb-6">
           <h2 className="text-2xl font-bold text-center mb-6">Отметить выполненным</h2>
 
@@ -96,6 +135,39 @@ const CompleteTaskModal = ({ isOpen, onClose, task }: CompleteTaskModalProps) =>
             <div className="font-medium text-lg">{task.title}</div>
           </div>
 
+          {/* === Вопрос про повтор (только для повторяющихся задач) === */}
+          {task.is_recurring && (
+            <div className="mb-6">
+              <div className="text-sm font-medium text-gray-700 mb-3">
+                Продолжить повторять эту задачу в будущем?
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setKeepRecurring(true)}
+                  className={`py-3 rounded-2xl font-medium text-sm transition-all border ${
+                    keepRecurring
+                      ? 'bg-emerald-500 text-white border-emerald-500 shadow'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  Да
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setKeepRecurring(false)}
+                  className={`py-3 rounded-2xl font-medium text-sm transition-all border ${
+                    !keepRecurring
+                      ? 'bg-rose-500 text-white border-rose-500 shadow'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  Нет
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Примечание */}
           <div className="mb-8">
             <label className="block text-sm font-medium mb-2">Примечание (необязательно)</label>
@@ -111,7 +183,7 @@ const CompleteTaskModal = ({ isOpen, onClose, task }: CompleteTaskModalProps) =>
         {/* Кнопки */}
         <div className="px-8 pb-8 flex gap-3">
           <button 
-            onClick={onClose}
+            onClick={handleClose}
             className="flex-1 py-3.5 border border-gray-300 text-gray-700 rounded-2xl font-medium hover:bg-gray-50 transition-colors"
           >
             Отмена

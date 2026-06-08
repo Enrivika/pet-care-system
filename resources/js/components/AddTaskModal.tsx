@@ -26,6 +26,16 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const medicalCategories = ['Лекарство', 'Ветеринар', 'Укол']; // Категория для медицинского журнала
+
+  // Проверяем, является ли выбранная дата прошедшей (строго по UTC, как и вся логика системы)
+  const isPastDate = (dateStr: string): boolean => {
+    if (!dateStr) return false;
+    const now = new Date();
+    const todayUTC = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+    return dateStr < todayUTC;
+  };
+
+  const isHistoricalTask = isPastDate(date);
   
   // Сброс формы при каждом открытии модалки
   useEffect(() => {
@@ -45,6 +55,14 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
       setIsAllDay(false);           // ← Чекбокс "На весь день" всегда выключен
     }
   }, [isOpen, defaultPetId]);
+
+  // При выборе прошедшей даты (по UTC) автоматически сбрасываем напоминание и повтор
+  useEffect(() => {
+    if (isHistoricalTask) {
+      setReminder('none');
+      setRecurrence('none');
+    }
+  }, [isHistoricalTask]);
 
   const handleCategoryChange = (cat: string) => {
     setCategory(cat);
@@ -118,16 +136,23 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
       ? `${date}T${time}:00` 
       : `${date}T00:00:00`;
 
-    const taskData = {
+    const taskData: any = {
       pet_id: parseInt(petId),
       title: title.trim(),
       event_type: category,
       start_at: startAt,
-      reminder_minutes: reminderValue,  // ← Только число или null
-      recurrence_rule: recurrence !== 'none' ? recurrence : null,
+      // Для прошедших дат (по UTC) принудительно отключаем напоминания и повторы
+      reminder_minutes: isHistoricalTask ? null : reminderValue,
+      recurrence_rule: isHistoricalTask ? null : (recurrence !== 'none' ? recurrence : null),
       is_medical: medicalCategories.includes(category) || (category === 'Другое' && isMedical),
       is_all_day: isAllDay || time === '',
     };
+
+    // Если пользователь добавил задачу с прошедшей датой — сразу помечаем как выполненную (в историю)
+    if (isHistoricalTask) {
+      taskData.is_completed = true;
+      taskData.completed_at = startAt;
+    }
 
     try {
       await dispatch(createTask(taskData) as any).unwrap();
@@ -161,9 +186,21 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
 
   if (!isOpen) return null;
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={handleBackdropClick}
+    >
+      <div 
+        className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="p-8">
           <h2 className="text-2xl font-bold mb-6">Добавить задачу</h2>
 
@@ -276,37 +313,44 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
             </div>            
           </div>
 
-          {/* Напоминание */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium mb-2">Напоминание</label>
-            <select 
-              value={reminder} 
-              onChange={(e) => setReminder(e.target.value)}
-              disabled={!time}
-              className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 ${!time ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-            >
-              {reminderOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-            {!time && (
-              <p className="text-xs text-gray-500 mt-1">Укажите время, чтобы включить напоминание</p>
-            )}
-          </div>
+          {/* Напоминание и Повтор — показываем только для сегодняшних и будущих задач */}
+          {!isHistoricalTask && (
+            <>
+              {/* Напоминание */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2">Напоминание</label>
+                <select 
+                  value={reminder} 
+                  onChange={(e) => setReminder(e.target.value)}
+                  disabled={!time}
+                  className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 ${!time ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                >
+                  {reminderOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                {!time && (
+                  <p className="text-xs text-gray-500 mt-1">Укажите время, чтобы включить напоминание</p>
+                )}
+              </div>
 
-          {/* Повтор */}
-          <div className="mb-8">
-            <label className="block text-sm font-medium mb-2">Повтор</label>
-            <select 
-              value={recurrence} 
-              onChange={(e) => setRecurrence(e.target.value)}
-              className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            >
-              {recurrenceOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
+              {/* Повтор */}
+              <div className="mb-8">
+                <label className="block text-sm font-medium mb-2">Повтор</label>
+                <select 
+                  value={recurrence} 
+                  onChange={(e) => setRecurrence(e.target.value)}
+                  className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  {recurrenceOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+            </>
+          )}
+
+
 
           {/* Кнопки */}
           <div className="flex gap-4">

@@ -143,7 +143,7 @@ const Auth = () => {
             
             {/* Название Petopia */}
             <h1 
-              className="text-6xl font-bold text-gray-900 tracking-[-0.03em]" 
+              className="text-4xl md:text-6xl font-bold text-gray-900 tracking-[-0.03em]" 
               style={{ fontFamily: 'Itim, cursive' }}
             >
               Petopia

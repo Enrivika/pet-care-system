@@ -82,7 +82,8 @@ public function register(Request $request)
             'email' => 'sometimes|required|email|unique:users,email,' . $user->id,
             'notify_email' => 'boolean',
             'notify_push' => 'boolean',
-            'avatar' => 'nullable|image|max:2048',
+            'avatar' => 'nullable|image|max:5120',
+            'remove_avatar' => 'sometimes|boolean',
         ]);
 
         $data = [
@@ -93,7 +94,7 @@ public function register(Request $request)
             'notify_push'  => $request->boolean('notify_push', $user->notify_push ?? false),
         ];
 
-        // Обработка загрузки аватара (сохраняем в public/users/, удаляем старый)
+        // Обработка аватара: загрузка нового имеет приоритет над удалением
         if ($request->hasFile('avatar')) {
             $file = $request->file('avatar');
             $filename = time() . '_' . $file->getClientOriginalName();
@@ -113,6 +114,15 @@ public function register(Request $request)
 
             $file->move($usersPath, $filename);
             $data['avatar'] = '/users/' . $filename;
+        } elseif ($request->boolean('remove_avatar')) {
+            // Явное удаление текущего аватара (без загрузки нового)
+            if ($user->avatar && str_starts_with($user->avatar, '/users/')) {
+                $oldPath = public_path(str_replace('/users/', 'users/', $user->avatar));
+                if (file_exists($oldPath)) {
+                    @unlink($oldPath);
+                }
+            }
+            $data['avatar'] = null;
         }
 
         $user->update($data);

@@ -261,7 +261,7 @@ const Calendar = () => {
         </div>
 
         {/* Время и время */}        
-        <div className="text-sm font-semibold text-gray-700 w-44 flex-shrink-0 text-center">
+        <div className="text-sm font-semibold text-gray-700 w-28 md:w-44 flex-shrink-0 text-center">
           {activeTab === 'week' || activeTab === 'all' 
             ? formatDateLabel(task.start_at)
             : formatTime(task.start_at) === '–' ? '—' : formatTime(task.start_at)
@@ -363,7 +363,7 @@ const Calendar = () => {
           </div>
 
           {/* Дата и время — по центру */}
-          <div className="w-28 flex-shrink-0 text-sm text-center">
+          <div className="w-20 md:w-28 flex-shrink-0 text-sm text-center">
             <div className="font-medium text-gray-900">{dateLabel}</div>
             {timeLabel && (
               <div className="text-gray-500 text-xs">({timeLabel})</div>
@@ -445,17 +445,17 @@ const Calendar = () => {
 
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 md:mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-gray-900">Календарь и задачи</h1>
-            <p className="text-gray-600 mt-1">
+            <h1 className="text-2xl md:text-4xl font-bold text-gray-900">Календарь и задачи</h1>
+            <p className="text-gray-600 mt-1 text-sm md:text-base">
               Всего запланировано <span className="font-semibold text-emerald-600">{allTasks.length}</span> задач
             </p>
           </div>
           
-          <button onClick={() => setShowAddModal(true)} className="px-6 py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 flex items-center gap-2">
+          <button onClick={() => setShowAddModal(true)} className="px-4 py-2 sm:px-6 sm:py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 flex items-center gap-2 text-sm sm:text-base w-fit">
             + Добавить задачу
           </button>
         </div>
@@ -470,7 +470,7 @@ const Calendar = () => {
           />
         </div>
 
-        <div className="flex border-b mb-6">
+        <div className="flex border-b mb-6 overflow-x-auto whitespace-nowrap">
           {[
             { id: 'today', label: 'Сегодня' },
             { id: 'week', label: 'Неделя' },
@@ -481,7 +481,7 @@ const Calendar = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-6 py-3 font-medium border-b-2 transition-colors ${activeTab === tab.id ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-600 hover:text-gray-900'}`}
+              className={`px-4 md:px-6 py-3 font-medium border-b-2 transition-colors flex-shrink-0 ${activeTab === tab.id ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-600 hover:text-gray-900'}`}
             >
               {tab.label}
             </button>
@@ -534,9 +534,9 @@ const Calendar = () => {
 
           {/* Вкладка "Календарь" */}
           {activeTab === 'calendar' && (
-            <div className="flex h-[650px]">
-              {/* Левая часть — Календарь (уменьшен до ~33%) */}
-              <div className="w-1/3 p-6 border-r">
+            <div className="flex flex-col md:flex-row h-auto md:h-[650px]">
+              {/* Левая часть — Календарь */}
+              <div className="w-full md:w-1/3 p-4 md:p-6 border-b md:border-r md:border-b-0">
                 <div className="mb-4">
                   <h3 className="text-xl font-semibold mb-1">Календарь</h3>
                   <p className="text-sm text-gray-600">Выберите дату</p>
@@ -566,8 +566,8 @@ const Calendar = () => {
                 </div>
               </div>
 
-              {/* Правая часть — Задачи (66%) */}
-              <div className="w-2/3 p-8 flex flex-col">
+              {/* Правая часть — Задачи */}
+              <div className="w-full md:w-2/3 p-4 md:p-8 flex flex-col">
                 <div className="mb-6 flex items-center justify-between">
                   <div>
                     <h3 className="text-2xl font-semibold">
