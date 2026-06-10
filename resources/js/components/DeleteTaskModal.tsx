@@ -41,27 +41,37 @@ const DeleteTaskModal = ({ isOpen, onClose, task, onSuccess }: DeleteTaskModalPr
       onClick={onClose}
     >
       <div 
-        className="bg-white rounded-3xl w-full max-w-md p-8 shadow-xl mx-4"
+        className="bg-white rounded-3xl w-full max-w-md px-6 py-6 sm:px-8 sm:py-8 shadow-xl mx-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-2xl font-bold text-red-600 text-center mb-4">Удалить задачу?</h2>
+        <h2 
+          className="text-xl sm:text-2xl font-bold text-red-600 text-center mb-3 sm:mb-4"
+          style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+        >
+          Удалить задачу?
+        </h2>
         
-        <p className="text-gray-600 text-center mb-8">
+        <p 
+          className="text-gray-600 text-center mb-6 sm:mb-8 text-sm sm:text-base"
+          style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+        >
           Это действие нельзя отменить.<br />
           Задача будет удалена навсегда.
         </p>
 
-        <div className="flex gap-4">
+        <div className="flex gap-3 sm:gap-4">
           <button
             onClick={onClose}
-            className="flex-1 py-3 border border-gray-300 rounded-2xl hover:bg-gray-50 transition-colors"
+            className="flex-1 py-3 sm:py-3.5 border border-gray-300 text-gray-700 rounded-2xl font-medium hover:bg-gray-50 transition-colors"
+            style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
           >
             Отмена
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="flex-1 py-3 bg-red-600 text-white rounded-2xl hover:bg-red-700 transition-colors disabled:opacity-70"
+            className="flex-1 py-3 sm:py-3.5 bg-red-600 text-white rounded-2xl font-medium hover:bg-red-700 transition-colors disabled:opacity-70"
+            style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
           >
             {isDeleting ? 'Удаление...' : 'Удалить'}
           </button>

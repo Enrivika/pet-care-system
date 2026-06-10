@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from 'react-redux';
 import { updateTask, fetchAllTasks } from '../store/slices/calendarEventsSlice';
 import { RootState } from '../store';
 import { toast } from 'sonner';
+import CategorySelector from './CategorySelector';
+import { MEDICAL_CATEGORIES } from '../utils/categories';
 
 interface EditTaskModalProps {
   isOpen: boolean;
@@ -29,7 +31,7 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
 
   const isCompleted = task?.is_completed;
 
-  const medicalCategories = ['Лекарство', 'Ветеринар', 'Укол'];
+  // MEDICAL_CATEGORIES импортирован из utils/categories (единственный источник)
 
   // Получаем сегодняшнюю дату в UTC (YYYY-MM-DD)
   // Используем UTC, чтобы ограничение дат при редактировании истории работало последовательно с остальной логикой
@@ -38,20 +40,7 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
     return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
   };
 
-  const categories = [
-    { name: 'Кормление', color: 'bg-orange-100 text-orange-700' },
-    { name: 'Поение', color: 'bg-blue-100 text-blue-700' },
-    { name: 'Прогулка', color: 'bg-green-100 text-green-700' },
-    { name: 'Игры', color: 'bg-red-100 text-red-700' },
-    { name: 'Лекарство', color: 'bg-red-100 text-red-700' },
-    { name: 'Гигиена', color: 'bg-cyan-100 text-cyan-700' },
-    { name: 'Ветеринар', color: 'bg-slate-100 text-slate-700' },
-    { name: 'Укол', color: 'bg-purple-100 text-purple-700' },
-    { name: 'Обучение', color: 'bg-violet-100 text-violet-700' },
-    { name: 'Груминг', color: 'bg-amber-100 text-amber-700' },
-    { name: 'Уборка', color: 'bg-stone-100 text-stone-700' },
-    { name: 'Другое', color: 'bg-gray-100 text-gray-700' },
-  ];
+
 
   // Заполняем форму
   useEffect(() => {
@@ -63,7 +52,7 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
       setIsAllDay(task.is_all_day || false);
 
       // Автоматически определяем isMedical
-      const isMed = medicalCategories.includes(task.event_type) || task.is_medical;
+      const isMed = MEDICAL_CATEGORIES.includes(task.event_type) || task.is_medical;
       setIsMedical(isMed);
 
       if (task.start_at) {
@@ -96,7 +85,7 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
   const handleCategoryChange = (newCategory: string) => {
     setCategory(newCategory);
 
-    if (medicalCategories.includes(newCategory)) {
+    if (MEDICAL_CATEGORIES.includes(newCategory)) {
       setIsMedical(true);
     } else if (newCategory !== 'Другое') {
       setIsMedical(false);
@@ -134,7 +123,7 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
       title: safeTitle,
       event_type: category,
       start_at: startAt,
-      is_medical: medicalCategories.includes(category) || (category === 'Другое' && isMedical),
+      is_medical: MEDICAL_CATEGORIES.includes(category) || (category === 'Другое' && isMedical),
       is_all_day: isAllDay,
     };
 
@@ -183,14 +172,17 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
         className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-xl mx-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-8 pt-8 pb-6">
-          <h2 className="text-2xl font-bold text-center mb-6">
+        <div className="px-6 pt-6 pb-4 sm:px-8 sm:pt-8 sm:pb-6">
+          <h2 
+            className="text-xl sm:text-2xl font-bold text-center mb-5 sm:mb-6"
+            style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+          >
             {isCompleted ? 'Редактирование выполненной задачи' : 'Редактировать задачу'}
           </h2>
 
           {/* Фото питомца + имя */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 rounded-2xl overflow-hidden border-4 border-white shadow-md flex-shrink-0">
+          <div className="flex items-center gap-4 mb-5 sm:mb-6">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border-4 border-white shadow-md flex-shrink-0">
               <img 
                 src={task.pet?.photo_url || task.pet?.photo || "/images/Cat_and_dog.png"} 
                 alt={task.pet?.name || 'Питомец'} 
@@ -198,69 +190,71 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
               />
             </div>
             <div>
-              <div className="text-sm text-gray-500">Питомец</div>
-              <div className="font-semibold text-lg">{task.pet?.name || 'Неизвестный питомец'}</div>
+              <div 
+                className="text-xs sm:text-sm text-gray-500"
+                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+              >
+                Питомец
+              </div>
+              <div 
+                className="font-semibold text-base sm:text-lg"
+                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+              >
+                {task.pet?.name || 'Неизвестный питомец'}
+              </div>
             </div>
           </div>
 
           {/* Название задачи */}
           <div className="mb-5">
-            <label className="block text-sm font-medium mb-2">Название задачи</label>
+            <label 
+              className="block text-sm sm:text-base font-medium mb-2"
+              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+            >
+              Название задачи
+            </label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full px-4 py-2.5 sm:py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base"
               placeholder="Введите название задачи..."
+              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
             />
           </div>
 
-          {/* Категория */}
+          {/* Категория — CategorySelector (точные цвета + PNG + адаптив) */}
           <div className="mb-5">
-            <label className="block text-sm font-medium mb-2">Категория *</label>
-            <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-              {categories.map((cat) => (
-                <button
-                  key={cat.name}
-                  type="button"
-                  onClick={() => handleCategoryChange(cat.name)}
-                  className={`px-4 py-2 rounded-2xl text-sm font-medium transition-all ${
-                    category === cat.name 
-                      ? 'ring-2 ring-emerald-500 scale-[1.02]' 
-                      : cat.color
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-
-            {/* Галочка "Является ли задача медицинской?" только для "Другое" */}
-            {category === 'Другое' && (
-              <div className="mt-3 flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  id="isMedical"
-                  checked={isMedical}
-                  onChange={(e) => setIsMedical(e.target.checked)}
-                  className="w-4 h-4 accent-emerald-500"
-                />
-                <label htmlFor="isMedical" className="text-sm text-gray-600">
-                  Является ли задача медицинской?
-                </label>
-              </div>
-            )}
+            <label 
+              className="block text-sm sm:text-base font-medium mb-2"
+              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+            >
+              Категория *
+            </label>
+            <CategorySelector
+              selected={category}
+              onSelect={handleCategoryChange}
+              isMedical={isMedical}
+              onIsMedicalChange={setIsMedical}
+              showMedicalCheckbox={true}
+            />
           </div>
 
           {/* Примечание (только для выполненных задач) */}
           {isCompleted && (
             <div className="mb-5">
-              <label className="block text-sm font-medium mb-2">Примечание</label>
+              <label 
+                className="block text-sm sm:text-base font-medium mb-2"
+                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+              >
+                Примечание
+              </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Введите итоги задачи..."
-                className="w-full px-4 py-3 border rounded-2xl h-24 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-4 py-2.5 sm:py-3 border rounded-2xl h-24 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base"
+                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
               />
             </div>
           )}
@@ -268,13 +262,19 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
           {/* Дата и время */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
             <div>
-              <label className="block text-sm font-medium mb-2">Дата *</label>
+              <label 
+                className="block text-sm sm:text-base font-medium mb-2"
+                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+              >
+                Дата *
+              </label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-4 py-2.5 sm:py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base"
                 required
+                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
                 {...(isCompleted 
                   ? { max: getTodayUTCDateString() } 
                   : { min: getTodayUTCDateString() }
@@ -283,19 +283,25 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
             </div>
             
             <div>
-              <label className="block text-sm font-medium mb-2">Время</label>
+              <label 
+                className="block text-sm sm:text-base font-medium mb-2"
+                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+              >
+                Время
+              </label>
               <input
                 type="time"
                 value={isAllDay ? '' : time}
                 onChange={(e) => setTime(e.target.value)}
                 disabled={isAllDay}
                 placeholder="--:--"
-                className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100"
+                className="w-full px-4 py-2.5 sm:py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100 text-sm sm:text-base"
+                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
               />
             </div>
             
             {/* Чекбокс "На весь день" */}
-            <div className="flex items-center gap-2 mt-2 mb-5 col-span-2">
+            <div className="flex items-center gap-2 mt-1 mb-1 col-span-2">
               <input 
                 type="checkbox" 
                 id="isAllDay"
@@ -308,7 +314,11 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
                 }}
                 className="w-4 h-4 accent-emerald-500"
               />
-              <label htmlFor="isAllDay" className="text-sm text-gray-600">
+              <label 
+                htmlFor="isAllDay" 
+                className="text-sm text-gray-600"
+                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+              >
                 На весь день (без времени)
               </label>
             </div>            
@@ -316,9 +326,14 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
 
           {/* Напоминание и Повтор (только для обычных задач) */}
           {!isCompleted && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 sm:mb-8">
               <div>
-                <label className="block text-sm font-medium mb-2">Напоминание</label>
+                <label 
+                  className="block text-sm sm:text-base font-medium mb-2"
+                  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+                >
+                  Напоминание
+                </label>
                 <select 
                   value={reminder} 
                   onChange={(e) => {
@@ -326,7 +341,8 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
                     setReminder(value);
                     setIsMomentOfEvent(value === '0');
                   }}
-                  className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2.5 sm:py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base"
+                  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
                 >
                   <option value="none">Без напоминания</option>
                   <option value="0">В момент события</option>
@@ -337,11 +353,17 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Повтор</label>
+                <label 
+                  className="block text-sm sm:text-base font-medium mb-2"
+                  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+                >
+                  Повтор
+                </label>
                 <select 
                   value={recurrence} 
                   onChange={(e) => setRecurrence(e.target.value)}
-                  className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-4 py-2.5 sm:py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base"
+                  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
                 >
                   <option value="none">Не повторять</option>
                   <option value="daily">Ежедневно</option>
@@ -356,10 +378,11 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
         </div>
 
         {/* Кнопки */}
-        <div className="px-8 pb-8 flex gap-3">
+        <div className="px-6 pb-6 sm:px-8 sm:pb-8 flex gap-3">
           <button 
             onClick={onClose}
             className="flex-1 py-3.5 border border-gray-300 text-gray-700 rounded-2xl font-medium hover:bg-gray-50 transition-colors"
+            style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
           >
             Отмена
           </button>
@@ -367,6 +390,7 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
             onClick={handleSubmit}
             disabled={isSubmitting}
             className="flex-1 py-3.5 bg-emerald-500 text-white rounded-2xl font-medium hover:bg-emerald-600 transition-colors disabled:bg-emerald-300 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
           >
             {isSubmitting ? (
               <>
