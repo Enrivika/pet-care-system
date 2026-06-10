@@ -129,12 +129,6 @@ const ViewTaskModal = ({ isOpen, onClose, task, onEdit }: ViewTaskModalProps) =>
               Редактировать задачу
             </button>
             <button 
-              onClick={() => setShowDeleteConfirm(true)}
-              className="flex-1 py-3.5 bg-red-500 text-white rounded-2xl font-medium hover:bg-red-600 transition-colors"
-            >
-              Удалить
-            </button>
-            <button 
               onClick={onClose}
               className="flex-1 py-3.5 border border-gray-300 text-gray-700 rounded-2xl font-medium hover:bg-gray-50 transition-colors"
             >

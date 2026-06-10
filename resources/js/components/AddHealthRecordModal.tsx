@@ -22,10 +22,10 @@ const AddHealthRecordModal = ({ isOpen, onClose, onSuccess, pets }: AddHealthRec
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories = [
-    { name: 'Укол', color: 'bg-purple-100 text-purple-700 hover:bg-purple-200' },
-    { name: 'Ветеринар', color: 'bg-teal-100 text-teal-700 hover:bg-teal-200' },
-    { name: 'Лекарство', color: 'bg-red-100 text-red-700 hover:bg-red-200' },
-    { name: 'Другое', color: 'bg-gray-100 text-gray-700 hover:bg-gray-200' },
+    { name: 'Укол', color: '#625AAE' },
+    { name: 'Ветеринар', color: '#5E8086' },
+    { name: 'Лекарство', color: '#C4585A' },
+    { name: 'Другое', color: '#6F6F6F' },
   ];
 
   // Сброс формы при открытии модалки
@@ -121,7 +121,8 @@ const AddHealthRecordModal = ({ isOpen, onClose, onSuccess, pets }: AddHealthRec
                   key={cat.name}
                   type="button"
                   onClick={() => setCategory(cat.name)}
-                  className={`px-5 py-2 rounded-2xl text-sm font-medium transition-all ${category === cat.name ? 'ring-2 ring-emerald-500 scale-[1.02]' : cat.color}`}
+                  className={`px-5 py-2 rounded-2xl text-sm font-medium transition-all ${category === cat.name ? 'ring-2 ring-emerald-500 scale-[1.02]' : ''}`}
+                  style={{ backgroundColor: `${cat.color}20`, color: cat.color }}
                 >
                   {cat.name}
                 </button>

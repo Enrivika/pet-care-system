@@ -246,9 +246,8 @@ const Dashboard = () => {
         {/* Приветствие */}
         <div className="mb-6 md:mb-8">
           <h1 
-            className="text-xl sm:text-xl md:text-2xl lg:text-2xl font-bold text-[#1F2421]"
-            style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-          >
+            className="text-xl sm:text-2xl md:text-2xl lg:text-3xl font-bold text-[#1F2421]" 
+              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>
             Добрый день, {user?.name?.split(' ')[0] || 'друг'}!
           </h1>
           <p 
@@ -268,7 +267,7 @@ const Dashboard = () => {
             >Мои питомцы</h2>
             <Link 
               to="/pets" 
-              className="inline-flex items-center gap-1 bg-[#1F2421] hover:bg-black active:bg-[#161A18] transition-colors text-[#E9F5ED] px-2.5 py-1 text-xs min-h-[28px] sm:px-3 sm:py-1.5 sm:text-xs sm:min-h-[32px] rounded-lg font-medium"
+              className="inline-flex items-center gap-1 bg-[#1F2421] hover:bg-black active:bg-[#161A18] transition-colors text-[#E9F5ED] px-2.5 py-1 text-xs min-h-[28px] sm:px-3 sm:py-1.5 sm:text-xs sm:min-h-[32px] rounded-lg font-medium min-w-[112px] sm:min-w-[124px] justify-center whitespace-nowrap"
               style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
             >
               Все питомцы →
@@ -279,8 +278,9 @@ const Dashboard = () => {
               2 карточки — только на самых узких экранах (<~380px).
               3 карточки — от ~380px до ~640px.
               4 карточки — от ~640px и шире (больше одного ряда быть не может). */}
-          <div className="grid grid-cols-2 min-[380px]:grid-cols-3 min-[640px]:grid-cols-4 gap-4 md:gap-6">
-            {sortedPets.map((pet: any) => {
+          {pets.length > 0 ? (
+            <div className="grid grid-cols-2 min-[380px]:grid-cols-3 min-[640px]:grid-cols-4 gap-4 md:gap-6">
+              {sortedPets.map((pet: any) => {
               const hasTask = events.some((e: any) => e.pet_id === pet.id && !e.is_completed);
               return (
                 <div
@@ -345,6 +345,12 @@ const Dashboard = () => {
               );
             })}
           </div>
+          ) : (
+            <div 
+              className="w-full text-center py-6 px-4 text-gray-500 bg-white rounded-2xl border text-sm sm:text-base md:text-lg lg:text-lg break-words"
+              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+            >Нет добавленных питомцев</div>
+          )}
         </div>
 
         {/* БЛОК 2: Ближайшие задачи */}
@@ -356,7 +362,7 @@ const Dashboard = () => {
             >Ближайшие задачи</h2>
             <Link 
               to="/calendar" 
-              className="inline-flex items-center gap-1 bg-[#1F2421] hover:bg-black active:bg-[#161A18] transition-colors text-[#E9F5ED] px-2.5 py-1 text-xs min-h-[28px] sm:px-3 sm:py-1.5 sm:text-xs sm:min-h-[32px] rounded-lg font-medium"
+              className="inline-flex items-center gap-1 bg-[#1F2421] hover:bg-black active:bg-[#161A18] transition-colors text-[#E9F5ED] px-2.5 py-1 text-xs min-h-[28px] sm:px-3 sm:py-1.5 sm:text-xs sm:min-h-[32px] rounded-lg font-medium min-w-[112px] sm:min-w-[124px] justify-center whitespace-nowrap"
               style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
             >
               Все задачи →
@@ -438,7 +444,7 @@ const Dashboard = () => {
               })
             ) : (
               <div 
-                className="col-span-3 text-center py-6 text-gray-500 bg-white rounded-2xl border"
+                className="col-span-3 w-full text-center py-6 px-4 text-gray-500 bg-white rounded-2xl border text-sm sm:text-base md:text-lg lg:text-lg break-words"
                 style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
               >Нет ближайших задач</div>
             )}
@@ -457,7 +463,7 @@ const Dashboard = () => {
           
           <div className="space-y-3 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0 lg:pt-10 xl:pt-12">
             {/* Карточка 1: Задачи в этом месяце */}
-            <div className="bg-[#1F2421]/10 rounded-2xl px-3 py-4 sm:px-4 sm:py-5 lg:px-3 lg:py-5 relative shadow-md ml-6 sm:ml-8 lg:ml-0">
+            <div className="bg-[#1F2421]/10 rounded-2xl px-3 py-4 sm:px-4 sm:py-5 lg:px-3 lg:py-5 relative ml-6 sm:ml-8 lg:ml-0">
               {/* Иконка: в мобильной — на половину левее карточки (вертикально по центру), 
                   в десктопной — на половину выше карточки (по центру по ширине). 
                   Размер значительно увеличен. */}
@@ -495,7 +501,7 @@ const Dashboard = () => {
             </div>
 
             {/* Карточка 2: Самая частая категория */}
-            <div className="bg-[#1F2421]/10 rounded-2xl px-3 py-4 sm:px-4 sm:py-5 lg:px-3 lg:py-5 relative shadow-md ml-6 sm:ml-8 lg:ml-0">
+            <div className="bg-[#1F2421]/10 rounded-2xl px-3 py-4 sm:px-4 sm:py-5 lg:px-3 lg:py-5 relative ml-6 sm:ml-8 lg:ml-0">
               <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:left-1/2 lg:top-0 lg:-translate-x-1/2 lg:-translate-y-1/2">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -535,7 +541,7 @@ const Dashboard = () => {
             </div>
 
             {/* Карточка 3: Дней с последнего визита к ветеринару */}
-            <div className="bg-[#1F2421]/10 rounded-2xl px-3 py-4 sm:px-4 sm:py-5 lg:px-3 lg:py-5 relative shadow-md ml-6 sm:ml-8 lg:ml-0">
+            <div className="bg-[#1F2421]/10 rounded-2xl px-3 py-4 sm:px-4 sm:py-5 lg:px-3 lg:py-5 relative ml-6 sm:ml-8 lg:ml-0">
               <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 lg:left-1/2 lg:top-0 lg:-translate-x-1/2 lg:-translate-y-1/2">
             <svg
               xmlns="http://www.w3.org/2000/svg"

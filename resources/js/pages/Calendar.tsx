@@ -17,7 +17,7 @@ const Calendar = () => {
   const { events, isLoading, error } = useSelector((state: RootState) => state.calendarEvents);
   const { pets } = useSelector((state: RootState) => state.pets);
   
-  const [activeTab, setActiveTab] = useState<'today' | 'week' | 'all' | 'calendar' | 'history'>('today');
+  const [activeTab, setActiveTab] = useState<'today' | 'week' | 'all' | 'calendar' | 'history'>('all');
   const [searchTerm, setSearchTerm] = useState('');
   
   const [showAddModal, setShowAddModal] = useState(false);
@@ -135,7 +135,7 @@ const Calendar = () => {
 
     const timeStr = taskDate.getHours() === 0 && taskDate.getMinutes() === 0 
       ? '' 
-      : ` (в ${taskDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })})`;
+      : ` (${taskDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })})`;
 
     if (taskDateStr === todayStr) {
       return `Сегодня${timeStr}`;
@@ -232,397 +232,610 @@ const Calendar = () => {
     setShowCompleteModal(true);
   };
 
-  const renderTaskRow = (task: any, isHistory: boolean = false) => (
-    <div key={task.id} className="flex items-center justify-between p-4 border-b hover:bg-gray-50">
-      <div className="flex items-center gap-3 flex-1">
-        {!isHistory && (
-          <input 
-            type="checkbox" 
-            className="w-5 h-5 accent-emerald-500 cursor-pointer flex-shrink-0"
-            checked={pendingCompleteTask === task.id}
-            onChange={() => handleComplete(task)}
+const renderTaskRow = (task: any) => {
+  const catColor = getCategoryColor(task.event_type);
+
+  // === Логика отображения даты ===
+  let displayDate = '';
+
+  if (activeTab === 'calendar') {
+    // На вкладке "Календарь" используем ту же умную логику, что и на вкладке "Все"
+    displayDate = formatDateLabel(task.start_at);
+  } else {
+    const isAllOrWeek = activeTab === 'week' || activeTab === 'all';
+    const fullLabel = isAllOrWeek 
+      ? formatDateLabel(task.start_at) 
+      : (formatTime(task.start_at) === '–' ? '—' : formatTime(task.start_at));
+    displayDate = fullLabel;
+  }
+
+  // Разделяем дату и время (как в истории)
+  let dateLabel = displayDate;
+  let timeLabel = '';
+
+  if (displayDate.includes('(')) {
+    const match = displayDate.match(/(.+?)\s*\((.+?)\)/);
+    if (match) {
+      dateLabel = match[1].trim();
+      timeLabel = match[2].trim();
+    }
+  } else if (activeTab === 'today') {
+    dateLabel = 'Сегодня';
+    timeLabel = displayDate !== '—' ? displayDate : '';
+  }
+
+  return (
+    <div 
+      key={task.id} 
+      onClick={() => handleComplete(task)}
+      className="bg-white border-b last:border-b-0 flex overflow-hidden hover:bg-gray-50 cursor-pointer relative min-h-[72px]"
+    >
+      {/* Цветовая полоска */}
+      <div className="w-1.5 flex-shrink-0 self-stretch" style={{ backgroundColor: catColor }} />
+
+      {/* Иконка категории */}
+      <div className="flex items-center pl-3 pr-2">
+        <div className="flex-shrink-0">
+          <img 
+            src={`/images/${task.event_type}.png`} 
+            alt={task.event_type}
+            className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12" 
           />
+        </div>
+      </div>
+
+      {/* Дата и время */}
+      <div className="w-20 min-[438px]:w-24 flex-shrink-0 flex flex-col items-center justify-center px-1 text-center">
+        <div className="text-[10px] min-[438px]:text-xs sm:text-sm font-medium text-gray-700 leading-tight">
+          {dateLabel}
+        </div>
+        {timeLabel && (
+          <div className="text-[10px] min-[438px]:text-xs text-gray-500 mt-0.5">
+            ({timeLabel})
+          </div>
         )}
+      </div>
 
+      {/* Основная информация */}
+      <div className="flex-1 min-w-0 pr-16 md:pr-20 py-3 flex flex-col justify-center">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-semibold text-gray-900 text-[10px] min-[438px]:text-xs sm:text-sm truncate">
+            {task.pet?.name}
+          </span>
+          <span 
+            className="px-2 py-0.5 rounded-full text-[10px] min-[438px]:text-xs sm:text-sm font-medium flex-shrink-0"
+            style={{ backgroundColor: `${catColor}20`, color: catColor }}
+          >
+            {task.event_type}
+          </span>
+        </div>
+
+        {task.title && (
+          <div className="text-[10px] min-[438px]:text-xs sm:text-sm text-gray-700 mt-1 line-clamp-2">
+            {task.title}
+          </div>
+        )}
+      </div>
+
+      {/* Кнопки */}
+      <div className="absolute top-1/2 -translate-y-1/2 right-3 md:right-5 flex flex-col md:flex-row items-center gap-0.5 md:gap-1 z-10 py-1 md:py-0">
+        <button
+          onClick={(e) => { e.stopPropagation(); handleEdit(task); }}
+          className="w-8 h-8 flex items-center justify-center text-[#1F2421] hover:text-emerald-600 transition-colors"
+          title="Редактировать"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/>
+            <path d="m15 5 4 4"/>
+          </svg>
+        </button>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); setSelectedTask(task); setShowDeleteModal(true); }}
+          className="w-8 h-8 flex items-center justify-center text-[#1F2421] hover:text-red-600 transition-colors"
+          title="Удалить"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 6h18" />
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const renderHistoryTaskRow = (task: any) => {
+  const completedDate = new Date(task.completed_at || task.updated_at);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  let dateLabel = '';
+  if (completedDate.toDateString() === today.toDateString()) {
+    dateLabel = 'Сегодня';
+  } else if (completedDate.toDateString() === yesterday.toDateString()) {
+    dateLabel = 'Вчера';
+  } else {
+    dateLabel = completedDate.toLocaleDateString('ru-RU', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  }
+
+  const timeLabel = completedDate.getHours() !== 0 || completedDate.getMinutes() !== 0 
+    ? completedDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  const catColor = getCategoryColor(task.event_type);
+
+  return (
+    <div 
+      key={task.id} 
+      onClick={() => handleEdit(task)}
+      className="bg-white border-b last:border-b-0 flex overflow-hidden hover:bg-gray-50 cursor-pointer relative"
+    >
+      {/* Цветовая полоска слева (как в мед. журнале) */}
+      <div 
+        className="w-1.5 flex-shrink-0" 
+        style={{ backgroundColor: catColor }} 
+      />
+
+      
+
+      <div className="flex-1 p-3 pr-12 sm:p-4 sm:pr-14 flex items-center gap-0.5 sm:gap-1">
         {/* Иконка категории */}
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-          task.event_type === 'Кормление' ? 'bg-orange-100 text-orange-600' :
-          task.event_type === 'Поение' ? 'bg-blue-100 text-blue-600' :
-          task.event_type === 'Прогулка' ? 'bg-green-100 text-green-600' :
-          task.event_type === 'Укол' ? 'bg-purple-100 text-purple-600' :
-          task.event_type === 'Лекарство' ? 'bg-red-100 text-red-600' :
-          task.event_type === 'Ветеринар' ? 'bg-slate-100 text-slate-600' :
-          'bg-gray-100 text-gray-600'
-        }`}>
-          {task.event_type === 'Кормление' ? '🍽️' : 
-          task.event_type === 'Поение' ? '💧' : 
-          task.event_type === 'Прогулка' ? '🚶' : 
-          task.event_type === 'Укол' ? '💉' : 
-          task.event_type === 'Лекарство' ? '💊' :
-          task.event_type === 'Ветеринар' ? '🩺' : '📋'}
+        <div className="flex-shrink-0">
+          <img 
+            src={`/images/${task.event_type}.png`} 
+            alt={task.event_type}
+            className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12" 
+          />
         </div>
 
-        {/* Время и время */}        
-        <div className="text-sm font-semibold text-gray-700 w-28 md:w-44 flex-shrink-0 text-center">
-          {activeTab === 'week' || activeTab === 'all' 
-            ? formatDateLabel(task.start_at)
-            : formatTime(task.start_at) === '–' ? '—' : formatTime(task.start_at)
-          }
+        {/* Дата и время */}
+        <div className="w-14 min-[438px]:w-16 sm:w-20 md:w-28 text-[10px] min-[438px]:text-xs sm:text-sm flex-shrink-0 text-center">
+          <div className="font-semibold text-gray-900">{dateLabel}</div>
+          {timeLabel && (
+            <div className="text-gray-500 text-[10px] min-[438px]:text-xs sm:text-sm mt-0.5">({timeLabel})</div>
+          )}
         </div>
 
-        <div className="flex-1 min-w-0">
+        {/* Информация о задаче */}
+        <div className="flex-1 min-w-0 pr-4">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-gray-900">{task.pet?.name || 'Питомец'}</span>
-            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              task.event_type === 'Кормление' ? 'bg-orange-100 text-orange-700' :
-              task.event_type === 'Поение' ? 'bg-blue-100 text-blue-700' :
-              task.event_type === 'Прогулка' ? 'bg-green-100 text-green-700' :
-              task.event_type === 'Укол' ? 'bg-purple-100 text-purple-700' :
-              task.event_type === 'Лекарство' ? 'bg-red-100 text-red-700' :
-              task.event_type === 'Ветеринар' ? 'bg-slate-100 text-slate-700' :
-              'bg-gray-100 text-gray-700'
-            }`}>
+            <span className="font-semibold text-gray-900 text-[10px] min-[438px]:text-xs sm:text-sm truncate">
+              {task.pet?.name}
+            </span>
+            <span 
+              className="px-2 py-0.5 sm:px-3 sm:py-0.5 rounded-full text-[10px] min-[438px]:text-xs sm:text-sm font-medium flex-shrink-0"
+              style={{ backgroundColor: `${catColor}20`, color: catColor }}
+            >
               {task.event_type}
             </span>
           </div>
           
           {task.title && (
-            <div className="text-sm text-gray-600 mt-0.5 truncate">
+            <div className="text-[10px] min-[438px]:text-xs sm:text-sm text-gray-700 mt-0.5 line-clamp-2">
               {task.title}
             </div>
           )}
         </div>
       </div>
 
-      {/* Кнопки действий */}
-      <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-        {isHistory ? (
-          <button 
-            onClick={() => handleEdit(task)} 
-            className="px-4 py-1.5 text-sm bg-emerald-100 text-emerald-700 rounded-xl hover:bg-emerald-200 font-medium"
-          >
-            Просмотр
-          </button>
-        ) : (
-          <>
-            <button 
-              onClick={() => handleEdit(task)} 
-              className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors" 
-              title="Редактировать"
-            >
-              ✏️
-            </button>
-            <button 
-              onClick={() => {
-                setSelectedTask(task);
-                setShowDeleteModal(true);
-              }} 
-              className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors" 
-              title="Удалить"
-            >
-              🗑️
-            </button>
-          </>
-        )}
-      </div>
+      {/* Кнопка удаления (как в мед. журнале) */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setSelectedTask(task);
+          setShowDeleteModal(true);
+        }}
+        className="absolute top-1/2 -translate-y-1/2 right-4 w-8 h-8 flex items-center justify-center group text-[#1F2421] hover:text-red-600 transition-colors z-10"
+        aria-label={`Удалить задачу для ${task.pet?.name}`}
+      >
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          className="w-5 h-5 transition-transform group-hover:scale-110"
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2.5" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        >
+          <path d="M3 6h18" />
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+          <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+          <path d="M10 11v6" />
+          <path d="M14 11v6" />
+        </svg>
+      </button>
     </div>
   );
-
-  const renderHistoryTaskRow = (task: any) => {
-    const completedDate = new Date(task.completed_at || task.updated_at);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    let dateLabel = '';
-    if (completedDate.toDateString() === today.toDateString()) {
-      dateLabel = 'Сегодня';
-    } else if (completedDate.toDateString() === yesterday.toDateString()) {
-      dateLabel = 'Вчера';
-    } else {
-      dateLabel = completedDate.toLocaleDateString('ru-RU', { 
-        day: 'numeric', 
-        month: 'long', 
-        year: 'numeric' 
-      });
-    }
-
-    const timeLabel = completedDate.getHours() !== 0 || completedDate.getMinutes() !== 0 
-      ? completedDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
-      : '';
-
-    return (
-      <div key={task.id} className="flex items-start justify-between p-4 border-b hover:bg-gray-50">
-        <div className="flex items-start gap-3 flex-1">
-          {/* Зелёная галочка */}
-          <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-            <span className="text-emerald-600 text-xl">✓</span>
-          </div>
-
-          {/* Иконка категории */}
-          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${getCategoryColor(task.event_type)}`}>
-            {getCategoryIcon(task.event_type)}
-          </div>
-
-          {/* Дата и время — по центру */}
-          <div className="w-20 md:w-28 flex-shrink-0 text-sm text-center">
-            <div className="font-medium text-gray-900">{dateLabel}</div>
-            {timeLabel && (
-              <div className="text-gray-500 text-xs">({timeLabel})</div>
-            )}
-          </div>
-
-          {/* Информация о задаче */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-gray-900">{task.pet?.name || 'Питомец'}</span>
-              <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${getCategoryBadgeColor(task.event_type)}`}>
-                {task.event_type}
-              </span>
-            </div>
-            
-            {task.title && (
-              <div className="text-sm text-gray-800 mt-1">
-                <span className="text-gray-500">Задача:</span> {task.title}
-              </div>
-            )}
-            
-            {task.notes && (
-              <div className="text-xs text-gray-600 mt-1">
-                <span className="text-gray-500">Примечание:</span> {task.notes}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Кнопка "Просмотр" (без удаления) */}
-        <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-          <button 
-            onClick={() => handleEdit(task)} 
-            className="px-4 py-1.5 text-sm bg-emerald-100 text-emerald-700 rounded-xl hover:bg-emerald-200 font-medium"
-          >
-            Просмотр
-          </button>
-        </div>
-      </div>
-    );
-  };
+};
 
   // Вспомогательные функции для цветов и иконок
   const getCategoryColor = (type: string) => {
     const colors: Record<string, string> = {
-      'Кормление': 'bg-orange-100 text-orange-600',
-      'Поение': 'bg-blue-100 text-blue-600',
-      'Прогулка': 'bg-green-100 text-green-600',
-      'Укол': 'bg-purple-100 text-purple-600',
-      'Лекарство': 'bg-red-100 text-red-600',
-      'Ветеринар': 'bg-slate-100 text-slate-600',
+      'Кормление': '#DA985D',
+      'Поение': '#4CA9B3',
+      'Прогулка': '#6D8967',
+      'Укол': '#625AAE',
+      'Лекарство': '#C4585A',
+      'Ветеринар': '#5E8086',
+      'Игры': '#984343',
+      'Гигиена': '#11759D',
+      'Обучение': '#906889',
+      'Груминг': '#847452',
+      'Уборка': '#8F5E5E',
+      'Другое': '#6F6F6F',
     };
-    return colors[type] || 'bg-gray-100 text-gray-600';
-  };
-
-  const getCategoryIcon = (type: string) => {
-    const icons: Record<string, string> = {
-      'Кормление': '🍽️',
-      'Поение': '💧',
-      'Прогулка': '🚶',
-      'Укол': '💉',
-      'Лекарство': '💊',
-      'Ветеринар': '🩺',
-    };
-    return icons[type] || '📋';
-  };
-
-  const getCategoryBadgeColor = (type: string) => {
-    const colors: Record<string, string> = {
-      'Кормление': 'bg-orange-100 text-orange-700',
-      'Поение': 'bg-blue-100 text-blue-700',
-      'Прогулка': 'bg-green-100 text-green-700',
-      'Укол': 'bg-purple-100 text-purple-700',
-      'Лекарство': 'bg-red-100 text-red-700',
-      'Ветеринар': 'bg-slate-100 text-slate-700',
-    };
-    return colors[type] || 'bg-gray-100 text-gray-700';
+    return colors[type] || '#6F6F6F';
   };
 
 
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 md:mb-8">
-          <div>
-            <h1 className="text-2xl md:text-4xl font-bold text-gray-900">Календарь и задачи</h1>
-            <p className="text-gray-600 mt-1 text-sm md:text-base">
-              Всего запланировано <span className="font-semibold text-emerald-600">{allTasks.length}</span> задач
-            </p>
+        {/* Заголовок */}
+        <div className="mb-4 md:mb-5">
+          <h1 className="text-xl sm:text-2xl md:text-2xl lg:text-3xl font-bold text-[#1F2421]" 
+              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>
+            Календарь и задачи
+          </h1>
+
+          {/* Динамический текст в зависимости от вкладки */}
+          <p className="mt-1 sm:mt-1.5 text-[#1F2421]/70 text-sm sm:text-base md:text-lg max-w-2xl"
+            style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>
+            {activeTab === 'today' && (
+              <>Всего запланировано задач на сегодня: <span className="font-semibold text-[#4BBB71]">{todayTasks.length}</span></>
+            )}
+            {activeTab === 'week' && (
+              <>Всего запланировано задач на неделю: <span className="font-semibold text-[#4BBB71]">{weekTasks.length}</span></>
+            )}
+            {activeTab === 'all' && (
+              <>Всего запланировано задач: <span className="font-semibold text-[#4BBB71]">{allTasks.length}</span></>
+            )}
+            {activeTab === 'calendar' && (
+              <>Всего запланировано задач на {selectedDate.toLocaleDateString('ru-RU', { 
+                day: '2-digit', month: '2-digit', year: 'numeric' 
+              })}: <span className="font-semibold text-[#4BBB71]">{tasksForSelectedDate.length}</span></>
+            )}
+            {activeTab === 'history' && (
+              <>Всего задач в истории: <span className="font-semibold text-[#4BBB71]">{historyTasks.length}</span></>
+            )}
+          </p>
+        </div>
+
+        {/* Поиск + Кнопка "Добавить задачу" */}
+        <div className="flex flex-col gap-3 min-[510px]:flex-row min-[510px]:items-center mb-6 md:mb-8">
+          {/* Поисковая строка */}
+          <div className="relative flex-1 min-w-0">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1F2421]/60 pointer-events-none">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className="w-[18px] h-[18px] min-[325px]:w-5 min-[325px]:h-5" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.34-4.34" />
+              </svg>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Поиск задачи по имени питомца..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-11 min-[325px]:pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl 
+                        text-[#1F2421] placeholder:text-[#1F2421]/60 
+                        hover:border-gray-300 hover:shadow-sm
+                        focus:outline-none focus:ring-2 focus:ring-[#4BBB71] focus:border-[#4BBB71]
+                        transition-all text-xs min-[325px]:text-sm sm:text-base"
+              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+            />
           </div>
-          
-          <button onClick={() => setShowAddModal(true)} className="px-4 py-2 sm:px-6 sm:py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 flex items-center gap-2 text-sm sm:text-base w-fit">
+
+          {/* Кнопка добавить */}
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-5 py-3.5 sm:px-6 sm:py-3.5 
+                      bg-gradient-to-r from-[#00A063] to-[#4BBB71] text-[#E9F5ED] rounded-2xl 
+                      hover:from-[#009055] hover:to-[#3DA35E] hover:shadow-md
+                      active:from-[#007a4f] active:to-[#2E8B57] active:scale-[0.985]
+                      flex items-center justify-center gap-2 text-sm sm:text-base font-medium 
+                      whitespace-nowrap flex-shrink-0 w-full min-[510px]:w-auto shadow-sm transition-all 
+                      min-h-[48px] min-[510px]:min-h-0"
+            style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+          >
             + Добавить задачу
           </button>
         </div>
 
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Поиск задачи по имени питомца..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          />
+      <div 
+        className="fixed bottom-20 right-0 lg:bottom-0 z-[70] pointer-events-none select-none"
+        style={{ filter: 'blur(8px)' }}
+      >
+        <div className="rotate-[-30deg] origin-bottom-right -mr-64 -mb-10 sm:-mr-96 sm:-mb-16 md:-mr-128 md:-mb-22 lg:-mr-160 lg:-mb-26 xl:-mr-200 xl:-mb-32">
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="w-[500px] h-[450px] sm:w-[650px] sm:h-[580px] md:w-[850px] md:h-[760px] lg:w-[900px] lg:h-[800px] xl:w-[1050px] xl:h-[930px] text-[#1F2421] opacity-10" 
+            viewBox="0 0 320 280" 
+            fill="currentColor"
+          >
+            {/* Left ear */}
+            <polygon points="95,55 55,12 125,38" />
+            {/* Right ear */}
+            <polygon points="225,55 265,12 195,38" />
+            {/* Head (main face) */}
+            <ellipse cx="160" cy="155" rx="105" ry="92" />
+            {/* Inner ears for better shape */}
+            <polygon points="105,52 68,20 118,40" />
+            <polygon points="215,52 252,20 202,40" />
+          </svg>
         </div>
+      </div>
 
-        <div className="flex border-b mb-6 overflow-x-auto whitespace-nowrap">
-          {[
-            { id: 'today', label: 'Сегодня' },
-            { id: 'week', label: 'Неделя' },
-            { id: 'all', label: 'Все' },
-            { id: 'calendar', label: 'Календарь' },
-            { id: 'history', label: 'История' },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`px-4 md:px-6 py-3 font-medium border-b-2 transition-colors flex-shrink-0 ${activeTab === tab.id ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-gray-600 hover:text-gray-900'}`}
-            >
-              {tab.label}
-            </button>
-          ))}
+<div className="bg-white rounded-2xl border shadow-sm">
+  
+{/* ==================== ВКЛАДКИ ==================== */}
+<div className="flex border-b overflow-x-auto whitespace-nowrap">
+  {[
+    { id: 'today', label: 'Сегодня' },
+    { id: 'week', label: 'Неделя' },
+    { id: 'all', label: 'Все' },
+    { id: 'calendar', label: 'Календарь' },
+    { id: 'history', label: 'История' },
+  ].map(tab => (
+    <button
+      key={tab.id}
+      onClick={() => setActiveTab(tab.id as any)}
+      className={`flex-1 px-2 py-3.5 font-medium border-b-2 transition-all text-center
+        text-[10px] min-[365px]:text-xs sm:text-sm md:text-base
+        ${activeTab === tab.id 
+          ? 'border-[#4BBB71] text-[#4BBB71]' 
+          : 'border-transparent text-[#1F2421]/70 hover:text-[#1F2421] hover:border-gray-300'}`}
+      style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+    >
+      {tab.label}
+    </button>
+  ))}
+</div>
+
+  {/* Показываем "Загрузка..." только при первой загрузке */}
+  {!hasInitialLoaded && isLoading && <div className="p-8 text-center">Загрузка...</div>}
+  {error && <div className="p-8 text-center text-red-500">{error}</div>}
+
+{/* ==================== ВКЛАДКА "СЕГОДНЯ" ==================== */}
+{activeTab === 'today' && (
+  <>
+{/* Зелёная подсказка */}
+<div className="px-3 py-2 min-[325px]:px-4 min-[325px]:py-2.5 bg-[#4BBB71]/10 flex items-center justify-center gap-2 text-[9px] min-[325px]:text-[10px] min-[373px]:text-xs sm:text-sm text-[#4BBB71] border-b">
+  <span>Нажми на задачу, чтобы отметить её выполненной</span>
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className="w-[14px] h-[14px] min-[325px]:w-[15px] min-[373px]:w-4 min-[373px]:h-4 text-[#4BBB71] flex-shrink-0"
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="3" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+  >
+    <path d="M20 6 9 17l-5-5"/>
+  </svg>
+</div>
+
+    {todayTasks.length > 0 
+      ? todayTasks.map(task => renderTaskRow(task))
+      : <div 
+      className="col-span-3 w-full text-center py-6 px-4 text-gray-500 bg-white rounded-2xl border text-sm sm:text-base md:text-lg lg:text-lg break-words"
+      style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>
+        На сегодня задач нет
         </div>
+    }
+  </>
+)}
 
-        <div className="bg-white rounded-2xl border shadow-sm min-h-[500px]">
-          {/* Показываем "Загрузка..." ТОЛЬКО при первой загрузке */}
-          {!hasInitialLoaded && isLoading && <div className="p-8 text-center">Загрузка...</div>}
-          {error && <div className="p-8 text-center text-red-500">{error}</div>}
+{/* ==================== ВКЛАДКА "НЕДЕЛЯ" ==================== */}
+{activeTab === 'week' && (
+  <>
+{/* Зелёная подсказка */}
+<div className="px-3 py-2 min-[325px]:px-4 min-[325px]:py-2.5 bg-[#4BBB71]/10 flex items-center justify-center gap-2 text-[9px] min-[325px]:text-[10px] min-[373px]:text-xs sm:text-sm text-[#4BBB71] border-b">
+  <span>Нажми на задачу, чтобы отметить её выполненной</span>
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className="w-[14px] h-[14px] min-[325px]:w-[15px] min-[373px]:w-4 min-[373px]:h-4 text-[#4BBB71] flex-shrink-0"
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="3" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+  >
+    <path d="M20 6 9 17l-5-5"/>
+  </svg>
+</div>
 
-          {/* Вкладка "Сегодня" */}
-          {activeTab === 'today' && (
-            <div>
-              <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold">Сегодня — {new Date().toLocaleDateString('ru-RU')}</h2>
-                <p className="text-gray-600">Всего запланировано {todayTasks.length} задач</p>
-              </div>
-              {todayTasks.length > 0 ? todayTasks.map(task => renderTaskRow(task)) : (
-                <div className="p-12 text-center text-gray-500">На сегодня задач нет</div>
-              )}
-            </div>
-          )}
+    {weekTasks.length > 0 
+      ? weekTasks.map(task => renderTaskRow(task))
+      : <div className="col-span-3 w-full text-center py-6 px-4 text-gray-500 bg-white rounded-2xl border text-sm sm:text-base md:text-lg lg:text-lg break-words"
+                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>На этой неделе задач нет</div>
+    }
+  </>
+)}
 
-          {/* Вкладка "Неделя" */}
-          {activeTab === 'week' && (
-            <div>
-              <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold">На этой неделе</h2>
-                <p className="text-gray-600">Всего запланировано {weekTasks.length} задач</p>
-              </div>
-              {weekTasks.length > 0 ? weekTasks.map(task => renderTaskRow(task)) : (
-                <div className="p-12 text-center text-gray-500">На этой неделе задач нет</div>
-              )}
-            </div>
-          )}
+{/* ==================== ВКЛАДКА "ВСЕ" ==================== */}
+{activeTab === 'all' && (
+  <>
+{/* Зелёная подсказка */}
+<div className="px-3 py-2 min-[325px]:px-4 min-[325px]:py-2.5 bg-[#4BBB71]/10 flex items-center justify-center gap-2 text-[9px] min-[325px]:text-[10px] min-[373px]:text-xs sm:text-sm text-[#4BBB71] border-b">
+  <span>Нажми на задачу, чтобы отметить её выполненной</span>
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className="w-[14px] h-[14px] min-[325px]:w-[15px] min-[373px]:w-4 min-[373px]:h-4 text-[#4BBB71] flex-shrink-0"
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="3" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+  >
+    <path d="M20 6 9 17l-5-5"/>
+  </svg>
+</div>
 
-          {/* Вкладка "Все" */}
-          {activeTab === 'all' && (
-            <div>
-              <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold">Все запланированные задачи</h2>
-                <p className="text-gray-600">Всего {allTasks.length} задач</p>
-              </div>
-              {allTasks.length > 0 ? allTasks.map(task => renderTaskRow(task)) : (
-                <div className="p-12 text-center text-gray-500">Запланированных задач нет</div>
-              )}
-            </div>
-          )}
+    {allTasks.length > 0 
+      ? allTasks.map(task => renderTaskRow(task))
+      : <div className="col-span-3 w-full text-center py-6 px-4 text-gray-500 bg-white rounded-2xl border text-sm sm:text-base md:text-lg lg:text-lg break-words"
+                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>Запланированных задач нет</div>
+    }
+  </>
+)}
 
-          {/* Вкладка "Календарь" */}
-          {activeTab === 'calendar' && (
-            <div className="flex flex-col md:flex-row h-auto md:h-[650px]">
-              {/* Левая часть — Календарь */}
-              <div className="w-full md:w-1/3 p-4 md:p-6 border-b md:border-r md:border-b-0">
-                <div className="mb-4">
-                  <h3 className="text-xl font-semibold mb-1">Календарь</h3>
-                  <p className="text-sm text-gray-600">Выберите дату</p>
-                </div>
+{/* ==================== ВКЛАДКА "КАЛЕНДАРЬ" ==================== */}
+{activeTab === 'calendar' && (
+  <div className="flex flex-col md:flex-row">
+    
+    {/* Левая часть — Календарь */}
+    <div className="w-full md:w-1/3 p-4 md:p-6 border-b md:border-r md:border-b-0 bg-white md:sticky md:top-6 md:self-start">
+      <ReactCalendar
+  value={selectedDate}
+  onChange={(date: any) => setSelectedDate(new Date(date))}
+tileClassName={({ date, view }) => {
+  if (view === 'month') {
+    const hasTask = events.some(e => 
+      new Date(e.start_at).toDateString() === date.toDateString() && !e.is_completed
+    );
+    const isSelected = date.toDateString() === selectedDate.toDateString();
+    const isToday = date.toDateString() === new Date().toDateString();
 
-                <div className="bg-white rounded-2xl p-4 border shadow-sm">
-                  <ReactCalendar
-                    value={selectedDate}
-                    onChange={(date: any) => setSelectedDate(new Date(date))}
-                    tileClassName={({ date, view }) => {
-                      if (view === 'month') {
-                        const hasTask = events.some(e => 
-                          new Date(e.start_at).toDateString() === date.toDateString() && !e.is_completed
-                        );
-                        if (hasTask) {
-                          return 'bg-emerald-500 text-white rounded-full font-semibold shadow-sm';
-                        }
-                      }
-                    }}
-                    className="w-full border-0 text-sm"
-                  />
-                </div>
+    let classes = '';
 
-                <div className="mt-3 flex items-center justify-center gap-2 text-xs text-gray-500">
-                  <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
-                  <span>Есть задачи</span>
-                </div>
-              </div>
+    if (isSelected) {
+      classes += ' !bg-[#1F2421] !text-white rounded-2xl font-medium';
+    } 
+    else if (hasTask) {
+      classes += ' bg-[#4BBB71] text-white rounded-full font-semibold shadow-sm';
+    } 
+    else if (isToday) {
+      classes += ' bg-[#E9F5ED] text-[#1F2421] rounded-2xl font-medium';
+    }
 
-              {/* Правая часть — Задачи */}
-              <div className="w-full md:w-2/3 p-4 md:p-8 flex flex-col">
-                <div className="mb-6 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-2xl font-semibold">
-                      {selectedDate.toLocaleDateString('ru-RU', { 
-                        weekday: 'long',
-                        day: 'numeric', 
-                        month: 'long'
-                      })}
-                    </h3>
-                    <p className="text-gray-600 mt-1">
-                      {tasksForSelectedDate.length} {tasksForSelectedDate.length === 1 ? 'задача' : 'задач'}
-                    </p>
-                  </div>
+    return classes;
+  }
 
-                  <button 
-                    onClick={() => setShowAddModal(true)}
-                    className="px-5 py-2.5 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 flex items-center gap-2 text-sm"
-                  >
-                    + Добавить задачу
-                  </button>
-                </div>
+  // === Вид "год" (выбор месяца) ===
+  if (view === 'year') {
+    const isSelectedMonth = 
+      date.getMonth() === selectedDate.getMonth() && 
+      date.getFullYear() === selectedDate.getFullYear();
 
-                <div className="flex-1 overflow-y-auto border rounded-2xl bg-white">
-                  {tasksForSelectedDate.length > 0 ? (
-                    tasksForSelectedDate.map(task => renderTaskRow(task))
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                      <div className="text-6xl mb-4 opacity-50">📅</div>
-                      <p className="text-xl text-gray-500 mb-2">На эту дату задач нет</p>
-                      <p className="text-sm text-gray-400">Выберите другую дату или добавьте новую задачу</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+    if (isSelectedMonth) {
+      return '!bg-[#1F2421] !text-white rounded-2xl font-medium';
+    }
+  }
 
-          {/* Вкладка "История" */}
-          {activeTab === 'history' && (
-            <div>
-              <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold">История выполненных задач</h2>
-                <p className="text-gray-600">Всего выполнено {historyTasks.length} задач</p>
-              </div>
-              
-              {historyTasks.length > 0 ? (
-                historyTasks.map(task => renderHistoryTaskRow(task))
-              ) : (
-                <div className="p-12 text-center text-gray-500">Выполненных задач пока нет</div>
-              )}
-            </div>
-          )}
-        </div>
+  // === Вид "десятилетие" (выбор года / десятилетия) ===
+  if (view === 'decade') {
+    const isSelectedDecade = date.getFullYear() === selectedDate.getFullYear();
+
+    if (isSelectedDecade) {
+      return '!bg-[#1F2421] !text-white rounded-2xl font-medium';
+    }
+  }
+
+  return '';
+}}
+  className="w-full border-0 text-sm bg-transparent react-calendar-custom"
+  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+/>
+
+      <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
+        <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+        <span>Есть задачи</span>
+      </div>
+    </div>
+
+    {/* Правая часть — Задачи */}
+    <div className="w-full md:w-2/3 bg-white flex flex-col">
+      
+      {/* Зелёная подсказка */}
+      <div className="px-3 py-2 min-[325px]:px-4 min-[325px]:py-2.5 bg-[#4BBB71]/10 flex items-center justify-center gap-2 text-[9px] min-[325px]:text-[10px] min-[373px]:text-xs sm:text-sm text-[#4BBB71] border-b">
+        <span>Нажми на задачу, чтобы отметить её выполненной</span>
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          className="w-[14px] h-[14px] min-[325px]:w-[15px] min-[373px]:w-4 min-[373px]:h-4 text-[#4BBB71] flex-shrink-0"
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="3" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        >
+          <path d="M20 6 9 17l-5-5"/>
+        </svg>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        {tasksForSelectedDate.length > 0 ? (
+          tasksForSelectedDate.map(task => renderTaskRow(task))
+        ) : (
+          <div className="flex flex-col items-center justify-center text-center">
+            <p className="col-span-3 w-full text-center py-6 px-4 text-gray-500 bg-white rounded-2xl text-sm sm:text-base md:text-lg lg:text-lg break-words"
+                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>На эту дату задач нет</p>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+
+{/* ==================== ВКЛАДКА "ИСТОРИЯ" ==================== */}
+{activeTab === 'history' && (
+  <>
+   
+{/* Подсказка — на всю ширину белой плашки */}
+<div 
+  className="px-4 py-2.5 bg-[#1F2421]/10 flex items-center justify-center gap-2 text-[10px] min-[360px]:text-xs sm:text-sm text-[#1F2421] border-b"
+  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+>
+  <span>Нажми на задачу, чтобы просмотреть её</span>
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    className="w-[15px] h-[15px] min-[360px]:w-4 min-[360px]:h-4 text-[#1F2421] flex-shrink-0"
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round"
+  >
+    <path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/>
+    <circle cx="12" cy="12" r="3"/>
+  </svg>
+</div>
+
+    {/* Список задач или пустое состояние */}
+    {historyTasks.length > 0 
+      ? historyTasks.map((task, index) => 
+          renderHistoryTaskRow(task, index === historyTasks.length - 1)
+        )
+      : <div className="col-span-3 w-full text-center py-6 px-4 text-gray-500 bg-white rounded-2xl border text-sm sm:text-base md:text-lg lg:text-lg break-words"
+                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>Выполненных задач пока нет</div>
+    }
+  </>
+)}
+</div>
       </div>
 
       {/* Модальные окна */}

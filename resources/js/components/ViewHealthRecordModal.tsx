@@ -1,8 +1,4 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { deleteTask, fetchAllTasks } from '../store/slices/calendarEventsSlice';
-import { toast } from 'sonner';
-import DeleteTaskModal from './DeleteTaskModal';
 
 interface ViewHealthRecordModalProps {
   isOpen: boolean;
@@ -13,40 +9,18 @@ interface ViewHealthRecordModalProps {
 }
 
 const ViewHealthRecordModal = ({ isOpen, onClose, record, onUpdated, onEdit }: ViewHealthRecordModalProps) => {
-  const dispatch = useDispatch();
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
   if (!isOpen || !record) return null;
 
-  const handleDelete = async () => {
-    try {
-      await dispatch(deleteTask(record.id) as any).unwrap();
-      toast.success('Медицинская запись удалена');
-      dispatch(fetchAllTasks() as any);
-      setShowDeleteConfirm(false);
-      onClose();
-      onUpdated();
-    } catch (err: any) {
-      toast.error(err || 'Ошибка удаления записи');
-    }
-  };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'Укол': return '💉';
-      case 'Лекарство': return '💊';
-      case 'Ветеринар': return '🩺';
-      default: return '📋';
-    }
-  };
 
   const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'Укол': return 'bg-purple-100 text-purple-700';
-      case 'Лекарство': return 'bg-red-100 text-red-700';
-      case 'Ветеринар': return 'bg-teal-100 text-teal-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
+    const colors: Record<string, string> = {
+      'Укол': '#625AAE',
+      'Ветеринар': '#5E8086',
+      'Лекарство': '#C4585A',
+      'Другое': '#6F6F6F',
+    };
+    return colors[category] || '#6F6F6F';
   };
 
   // Отображение даты и времени выполнения
@@ -97,8 +71,15 @@ const ViewHealthRecordModal = ({ isOpen, onClose, record, onUpdated, onEdit }: V
             {/* Категория */}
             <div className="mb-5">
               <div className="text-sm text-gray-500 mb-2">Категория</div>
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium ${getCategoryColor(record.event_type)}`}>
-                <span>{getCategoryIcon(record.event_type)}</span>
+              <div 
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-medium"
+                style={{ backgroundColor: `${getCategoryColor(record.event_type)}20`, color: getCategoryColor(record.event_type) }}
+              >
+                <img 
+                  src={`/images/${record.event_type}.png`} 
+                  alt={record.event_type} 
+                  className="w-5 h-5" 
+                />
                 <span>{record.event_type}</span>
               </div>
             </div>
@@ -127,12 +108,6 @@ const ViewHealthRecordModal = ({ isOpen, onClose, record, onUpdated, onEdit }: V
               Редактировать запись
             </button>
             <button 
-              onClick={() => setShowDeleteConfirm(true)}
-              className="flex-1 py-3.5 bg-red-500 text-white rounded-2xl font-medium hover:bg-red-600 transition-colors"
-            >
-              Удалить
-            </button>
-            <button 
               onClick={onClose}
               className="flex-1 py-3.5 border border-gray-300 text-gray-700 rounded-2xl font-medium hover:bg-gray-50 transition-colors"
             >
@@ -142,12 +117,6 @@ const ViewHealthRecordModal = ({ isOpen, onClose, record, onUpdated, onEdit }: V
         </div>
       </div>
 
-      <DeleteTaskModal 
-        isOpen={showDeleteConfirm} 
-        onClose={() => setShowDeleteConfirm(false)} 
-        task={record} 
-        onSuccess={onClose}
-      />
     </>
   );
 };

@@ -179,80 +179,133 @@ const Pets = () => {
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 md:mb-8">
-          <div>
-            <h1 className="text-2xl md:text-4xl font-bold text-gray-900">Мои питомцы</h1>
-            <p className="text-gray-600 mt-1 text-sm md:text-base">Управляйте профилями своих любимцев</p>
+        {/* Заголовок */}
+        <div className="mb-4 md:mb-5">
+          <h1 className="text-xl sm:text-2xl md:text-2xl lg:text-3xl font-bold text-[#1F2421]" 
+              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>
+            Мои питомцы
+          </h1>
+          <p className="mt-1 sm:mt-1.5 text-[#1F2421]/70 text-sm sm:text-base md:text-lg max-w-2xl"
+            style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>
+            Всего добавлено питомцев: <span className="font-semibold text-[#4BBB71]">{pets.length}</span>
+          </p>
+        </div>
+
+        {/* Поиск + Кнопка "Добавить" в одной строке */}
+        <div className="flex flex-col gap-3 min-[470px]:flex-row min-[470px]:items-center mb-6 md:mb-8">
+          {/* Поисковая строка */}
+          <div className="relative flex-1 min-w-0">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#1F2421]/60 pointer-events-none">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" 
+                  fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.34-4.34" />
+              </svg>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Поиск питомца по имени..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl 
+                        text-[#1F2421] placeholder:text-[#1F2421]/60 
+                        hover:border-gray-300 hover:shadow-sm
+                        focus:outline-none focus:ring-2 focus:ring-[#4BBB71] focus:border-[#4BBB71]
+                        transition-all text-sm sm:text-base"
+              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+            />
           </div>
 
+          {/* Кнопка добавить */}
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 sm:px-6 sm:py-3 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 flex items-center gap-2 text-sm sm:text-base w-fit"
+            className="px-5 py-3.5 sm:px-6 sm:py-3.5 
+                      bg-gradient-to-r from-[#00A063] to-[#4BBB71] text-[#E9F5ED] rounded-2xl 
+                      hover:from-[#009055] hover:to-[#3DA35E] hover:shadow-md
+                      active:from-[#007a4f] active:to-[#2E8B57] active:scale-[0.985]
+                      flex items-center justify-center gap-2 text-sm sm:text-base font-medium 
+                      whitespace-nowrap flex-shrink-0 w-full min-[470px]:w-auto shadow-sm transition-all 
+                      min-h-[48px] min-[470px]:min-h-0"
+            style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
           >
             + Добавить питомца
           </button>
-        </div>
-
-        {/* Поиск */}
-        <div className="mb-6">
-          <input
-            type="text"
-            placeholder="Поиск питомца по имени..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full max-w-md px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          />
         </div>
 
         {isLoading && <div className="text-center py-12">Загрузка...</div>}
         {error && <div className="text-red-500 text-center py-12">{error}</div>}
 
         {!isLoading && filteredPets.length === 0 && (
-          <div className="bg-white rounded-2xl p-12 text-center border">
-            <div className="text-6xl mb-4">🐱🐶</div>
-            <h3 className="text-2xl font-semibold mb-2">Питомцы не найдены</h3>
-          </div>
+            <div 
+              className="w-full text-center py-6 px-4 text-gray-500 bg-white rounded-2xl border text-sm sm:text-base md:text-lg lg:text-lg break-words"
+              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+            >Нет добавленных питомцев</div>
         )}
 
         {/* Карточки питомцев */}
         {!isLoading && filteredPets.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 min-[380px]:grid-cols-3 min-[640px]:grid-cols-4 gap-4 md:gap-6">
             {filteredPets.map((pet: any) => {
-              const hasTasks = hasUpcomingTasks(pet.id);
-
+              const hasTask = hasUpcomingTasks(pet.id);
               return (
                 <div
                   key={pet.id}
                   onClick={() => openPetProfile(pet)}
-                  className="bg-white rounded-3xl p-6 border shadow-sm hover:shadow-lg transition-all cursor-pointer relative group"
+                  className="group relative bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-lg hover:bg-gray-100 transition-all cursor-pointer border border-gray-100 flex flex-col"
                 >
-                  <div className="flex justify-center mb-4">
-                    <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-3xl overflow-hidden border-4 border-white shadow-md">
-                      <img
-                        src={getPetAvatar(pet)}
-                        alt={pet.name}
-                        className="w-full h-full object-cover"
-                      />
+                  {/* Аватарка питомца — крупная, во всю ширину верха карточки.
+                      Чтобы карточки были более вертикально прямоугольными (особенно на lg/xl где шире),
+                      фото выше. Нижние края очень сильно скруглены (большой rounded-b), для овальной формы снизу. */}
+                  <div className="w-full h-36 sm:h-40 md:h-44 lg:h-52 xl:h-56 overflow-hidden rounded-b-[4rem] sm:rounded-b-[4.5rem] md:rounded-b-[5rem] lg:rounded-b-[6rem] xl:rounded-b-[6.5rem]">
+                    <img 
+                      src={pet.photo_url || "/images/Cat_and_dog.png"} 
+                      alt={pet.name} 
+                      className="w-full h-full object-cover transition-all group-hover:brightness-90"
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement;
+                        if (target.src !== "/images/Cat_and_dog.png") {
+                          target.src = "/images/Cat_and_dog.png";
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* Контент под фото с внутренним отступом */}
+                  <div className="p-3 sm:p-4 md:p-5 flex-1 flex flex-col">
+                    <div className="text-center">
+                      <h3 
+                        className="text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-semibold text-[#1F2421] tracking-[-0.01em] truncate" 
+                        style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+                        title={pet.name}
+                      >
+                        {pet.name}
+                      </h3>
+                      <p 
+                        className="text-gray-500 text-[10px] sm:text-xs md:text-sm lg:text-base mt-0.5 truncate"
+                        style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+                      >
+                        {formatAge(pet.age)}
+                      </p>
                     </div>
-                  </div>
 
-                  <div className="text-center mb-3">
-                    <h3 className="text-2xl font-bold">{pet.name}</h3>
-                    <p className="text-gray-600 mt-1">
-                      {formatAge(pet.age) || 'Возраст не указан'}
-                    </p>
-                  </div>
-
-                  <div className="flex justify-center">
-                    {hasTasks ? (
-                      <span className="px-4 py-1 bg-emerald-500 text-white text-sm font-medium rounded-full">
-                        Есть задача!
-                      </span>
-                    ) : (
-                      <span className="px-4 py-1 bg-gray-200 text-gray-600 text-sm font-medium rounded-full">
-                        Задач нет
-                      </span>
-                    )}
+                    <div className="mt-auto pt-1.5 sm:pt-2 flex justify-center w-full">
+                      {hasTask ? (
+                        <span 
+                          className="inline-flex items-center justify-center leading-none px-2.5 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 bg-[#4BBB71] text-white text-[10px] sm:text-xs md:text-sm font-medium rounded-full tracking-tight whitespace-nowrap flex-shrink-0 max-w-full"
+                          style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+                        >
+                          Есть задача
+                        </span>
+                      ) : (
+                        <span 
+                          className="inline-flex items-center justify-center leading-none px-2.5 py-1 sm:px-3 sm:py-1.5 md:px-4 md:py-2 bg-gray-200 text-gray-600 text-[10px] sm:text-xs md:text-sm font-medium rounded-full tracking-tight whitespace-nowrap flex-shrink-0 max-w-full"
+                          style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+                        >
+                          Нет задач
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <button
@@ -260,15 +313,61 @@ const Pets = () => {
                       e.stopPropagation();
                       openDeleteModal(pet.id, pet.name);
                     }}
-                    className="absolute top-4 right-4 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600"
+                    className="absolute top-3 right-3 w-10 h-10 sm:top-4 sm:right-4 sm:w-10 sm:h-10 
+                              bg-white rounded-full flex items-center justify-center 
+                              shadow-sm border border-gray-200 z-10
+                              hover:shadow-md hover:scale-105 hover:border-gray-300 
+                              active:scale-95 active:bg-red-50 active:text-red-600 active:border-red-200 
+                              transition-all"
+                    style={{ color: '#1F2421' }}
+                    aria-label={`Удалить питомца ${pet.name}`}
                   >
-                    🗑️
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className="w-5 h-5"
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                      <path d="M10 11v6" />
+                      <path d="M14 11v6" />
+                    </svg>
                   </button>
                 </div>
               );
             })}
           </div>
         )}
+      </div>
+
+      <div 
+        className="fixed bottom-20 right-0 lg:bottom-0 z-[70] pointer-events-none select-none"
+        style={{ filter: 'blur(8px)' }}
+      >
+        <div className="rotate-[-30deg] origin-bottom-right -mr-64 -mb-10 sm:-mr-96 sm:-mb-16 md:-mr-128 md:-mb-22 lg:-mr-160 lg:-mb-26 xl:-mr-200 xl:-mb-32">
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="w-[500px] h-[450px] sm:w-[650px] sm:h-[580px] md:w-[850px] md:h-[760px] lg:w-[900px] lg:h-[800px] xl:w-[1050px] xl:h-[930px] text-[#1F2421] opacity-10" 
+            viewBox="0 0 320 280" 
+            fill="currentColor"
+          >
+            {/* Left ear */}
+            <polygon points="95,55 55,12 125,38" />
+            {/* Right ear */}
+            <polygon points="225,55 265,12 195,38" />
+            {/* Head (main face) */}
+            <ellipse cx="160" cy="155" rx="105" ry="92" />
+            {/* Inner ears for better shape */}
+            <polygon points="105,52 68,20 118,40" />
+            <polygon points="215,52 252,20 202,40" />
+          </svg>
+        </div>
       </div>
 
       {/* Модалка добавления питомца */}
