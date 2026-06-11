@@ -126,7 +126,14 @@ class CalendarEventController extends Controller
             'completed_at' => 'nullable|date',
             'notes' => 'nullable|string',
             'is_medical' => 'boolean',
+            'pet_id' => 'sometimes|integer|exists:pets,id',
         ]);
+
+        // Если меняется питомец — проверяем права на новый питомец (и разрешаем перенос события)
+        if (array_key_exists('pet_id', $validated) && (int)$validated['pet_id'] !== $event->pet_id) {
+            $newPet = Pet::findOrFail($validated['pet_id']);
+            $this->authorize('update', $newPet);
+        }
 
         $isMedical = in_array($validated['event_type'] ?? $event->event_type, ['Лекарство', 'Ветеринар', 'Укол'])
             ? true

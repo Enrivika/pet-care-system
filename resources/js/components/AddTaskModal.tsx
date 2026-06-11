@@ -27,26 +27,26 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
   const [isAllDay, setIsAllDay] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // MEDICAL_CATEGORIES импортирован из utils/categories (единственный источник)
-
   // Проверяем, является ли выбранная дата прошедшей (строго по UTC, как и вся логика системы)
   const isPastDate = (dateStr: string): boolean => {
     if (!dateStr) return false;
     const now = new Date();
-    const todayUTC = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`;
+    const todayUTC = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(
+      now.getUTCDate()
+    ).padStart(2, '0')}`;
     return dateStr < todayUTC;
   };
 
   const isHistoricalTask = isPastDate(date);
-  
+
   // Сброс формы при каждом открытии модалки
   useEffect(() => {
     if (isOpen) {
-      if (defaultPetId){
+      if (defaultPetId) {
         setPetId(defaultPetId.toString());
       } else {
         setPetId('');
-      }      
+      }
       setCategory('');
       setIsMedical(false);
       setTitle('');
@@ -54,7 +54,7 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
       setTime('');
       setReminder('none');
       setRecurrence('none');
-      setIsAllDay(false);           // ← Чекбокс "На весь день" всегда выключен
+      setIsAllDay(false); // ← Чекбокс "На весь день" всегда выключен
     }
   }, [isOpen, defaultPetId]);
 
@@ -68,7 +68,7 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
 
   const handleCategoryChange = (cat: string) => {
     setCategory(cat);
-    
+
     // Для медицинского журнала (используем централизованный список)
     if (MEDICAL_CATEGORIES.includes(cat)) {
       setIsMedical(true);
@@ -110,7 +110,7 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
     }
 
     setIsSubmitting(true);
-    
+
     let reminderValue: number | null = null;
     if (reminder === 'none') {
       reminderValue = null;
@@ -120,9 +120,7 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
       reminderValue = parseInt(reminder, 10);
     }
 
-    const startAt = time 
-      ? `${date}T${time}:00` 
-      : `${date}T00:00:00`;
+    const startAt = time ? `${date}T${time}:00` : `${date}T00:00:00`;
 
     const taskData: any = {
       pet_id: parseInt(petId),
@@ -131,7 +129,7 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
       start_at: startAt,
       // Для прошедших дат (по UTC) принудительно отключаем напоминания и повторы
       reminder_minutes: isHistoricalTask ? null : reminderValue,
-      recurrence_rule: isHistoricalTask ? null : (recurrence !== 'none' ? recurrence : null),
+      recurrence_rule: isHistoricalTask ? null : recurrence !== 'none' ? recurrence : null,
       is_medical: MEDICAL_CATEGORIES.includes(category) || (category === 'Другое' && isMedical),
       is_all_day: isAllDay || time === '',
     };
@@ -145,12 +143,12 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
     try {
       await dispatch(createTask(taskData) as any).unwrap();
       toast.success('Задача успешно добавлена!');
-      
+
       // Перезагружаем все задачи, чтобы список сразу обновился
       dispatch(fetchAllTasks() as any);
-      
+
       onClose();
-      
+
       // Сброс формы
       setPetId('');
       setCategory('');
@@ -166,7 +164,7 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
         toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
       } else {
         toast.error(err || 'Ошибка создания задачи');
-      }      
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -181,219 +179,258 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
   };
 
   return (
-    <div 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+    <div
+      className="
+        fixed inset-0 bg-black/50 z-[200]
+        flex items-center justify-center
+        max-[360px]:items-end
+      "
+      style={{
+        padding:
+          'max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left))',
+        fontFamily: 'Inter, sans-serif',
+      }}
       onClick={handleBackdropClick}
     >
-      <div 
-        className="bg-white rounded-3xl w-full max-w-2xl max-h-[92vh] overflow-y-auto mx-4 shadow-xl"
+      <div
+        className="
+          bg-white w-full
+          max-w-[520px] sm:max-w-2xl
+          rounded-3xl shadow-2xl overflow-hidden
+          max-h-[calc(100vh-24px)]
+          max-[360px]:max-h-[calc(100vh-16px)]
+        "
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Добавить задачу"
       >
-        <div className="px-6 pt-6 pb-4 sm:px-8 sm:pt-8 sm:pb-6">
-          <h2 
-            className="text-xl sm:text-2xl font-bold mb-5 sm:mb-6"
-            style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-          >
-            Добавить задачу
-          </h2>
+        <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 24px)' }}>
+          <div className="px-4 pt-4 pb-4 min-[380px]:px-5 sm:px-8 sm:pt-7 sm:pb-6">
+            <h2 className="text-lg min-[380px]:text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center tracking-[-0.02em]">
+              Добавить задачу
+            </h2>
 
-          {/* Выбор питомца */}
-          <div className="mb-5 sm:mb-6">
-            <label 
-              className="block text-sm sm:text-base font-medium mb-2"
-              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-            >
-              Питомец *
-            </label>
-            <select 
-              value={petId} 
-              onChange={(e) => setPetId(e.target.value)}
-              className="w-full px-4 py-2.5 sm:py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base"
-              required
-              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-            >
-              <option value="">Выберите питомца...</option>
-              {pets.map((pet: any) => (
-                <option key={pet.id} value={pet.id}>{pet.name}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Категория — используем CategorySelector для точных цветов + PNG + адаптив */}
-          <div className="mb-5 sm:mb-6">
-            <label 
-              className="block text-sm sm:text-base font-medium mb-2"
-              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-            >
-              Категория *
-            </label>
-            <CategorySelector
-              selected={category}
-              onSelect={handleCategoryChange}
-              isMedical={isMedical}
-              onIsMedicalChange={setIsMedical}
-              showMedicalCheckbox={true}
-            />
-          </div>
-
-          {/* Название задачи */}
-          <div className="mb-5 sm:mb-6">
-            <label 
-              className="block text-sm sm:text-base font-medium mb-2"
-              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-            >
-              Название задачи
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Введи название задачи..."
-              className="w-full px-4 py-2.5 sm:py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base"
-              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-            />
-          </div>
-
-          {/* Дата и время */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5 sm:mb-6">
-            <div>
-              <label 
-                className="block text-sm sm:text-base font-medium mb-2"
-                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-              >
-                Дата *
+            {/* Выбор питомца */}
+            <div className="mb-4 sm:mb-6">
+              <label className="block text-xs min-[380px]:text-sm sm:text-base font-medium mb-1.5 sm:mb-2 tracking-[-0.02em]">
+                Питомец *
               </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full px-4 py-2.5 sm:py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base"
+              <select
+                value={petId}
+                onChange={(e) => setPetId(e.target.value)}
+                className="
+                  w-full
+                  px-4 py-2.5 sm:py-3
+                  border rounded-2xl
+                  focus:outline-none focus:ring-2 focus:ring-emerald-500
+                  text-sm sm:text-base
+                "
                 required
-                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+              >
+                <option value="">Выберите питомца...</option>
+                {pets.map((pet: any) => (
+                  <option key={pet.id} value={pet.id}>
+                    {pet.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Категория */}
+            <div className="mb-4 sm:mb-6">
+              <label className="block text-xs min-[380px]:text-sm sm:text-base font-medium mb-1.5 sm:mb-2 tracking-[-0.02em]">
+                Категория *
+              </label>
+              <CategorySelector
+                selected={category}
+                onSelect={handleCategoryChange}
+                isMedical={isMedical}
+                onIsMedicalChange={setIsMedical}
+                showMedicalCheckbox={true}
               />
             </div>
-            
-            <div>
-              <label 
-                className="block text-sm sm:text-base font-medium mb-2"
-                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-              >
-                Время
+
+            {/* Название задачи */}
+            <div className="mb-4 sm:mb-6">
+              <label className="block text-xs min-[380px]:text-sm sm:text-base font-medium mb-1.5 sm:mb-2 tracking-[-0.02em]">
+                Название задачи
               </label>
               <input
-                type="time"
-                value={isAllDay ? '' : time}
-                onChange={(e) => setTime(e.target.value)}
-                disabled={isAllDay}
-                className="w-full px-4 py-2.5 sm:py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100 text-sm sm:text-base"
-                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Введи название задачи..."
+                className="
+                  w-full
+                  px-4 py-2.5 sm:py-3
+                  border rounded-2xl
+                  focus:outline-none focus:ring-2 focus:ring-emerald-500
+                  text-sm sm:text-base
+                "
               />
             </div>
-            
-            {/* Чекбокс "На весь день" */}
-            <div className="flex items-center gap-2 mt-1 mb-1 col-span-2">
-              <input 
-                type="checkbox" 
-                id="isAllDay"
-                checked={isAllDay}
-                onChange={(e) => {
-                  setIsAllDay(e.target.checked);
-                  if (e.target.checked) {
-                    setTime('');
-                  }
-                }}
-                className="w-4 h-4 accent-emerald-500"
-              />
-              <label 
-                htmlFor="isAllDay" 
-                className="text-sm text-gray-600"
-                style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-              >
-                На весь день (без времени)
-              </label>
-            </div>            
-          </div>
 
-          {/* Напоминание и Повтор — показываем только для сегодняшних и будущих задач */}
-          {!isHistoricalTask && (
-            <>
-              {/* Напоминание */}
-              <div className="mb-5 sm:mb-6">
-                <label 
-                  className="block text-sm sm:text-base font-medium mb-2"
-                  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-                >
-                  Напоминание
+            {/* Дата и время — всегда в одном ряду */}
+            <div className="grid grid-cols-2 gap-3 min-[380px]:gap-4 mb-4 sm:mb-6">
+              <div className="min-w-0">
+                <label className="block text-xs min-[380px]:text-sm sm:text-base font-medium mb-1.5 sm:mb-2 tracking-[-0.02em]">
+                  Дата *
                 </label>
-                <select 
-                  value={reminder} 
-                  onChange={(e) => setReminder(e.target.value)}
-                  disabled={!time}
-                  className={`w-full px-4 py-2.5 sm:py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base ${!time ? 'bg-gray-100 cursor-not-allowed' : ''}`}
-                  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-                >
-                  {reminderOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                {!time && (
-                  <p 
-                    className="text-xs text-gray-500 mt-1"
-                    style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="
+                    w-full min-w-0
+                    px-4 py-2.5 sm:py-3
+                    border rounded-2xl
+                    focus:outline-none focus:ring-2 focus:ring-emerald-500
+                    text-sm sm:text-base
+                  "
+                  required
+                />
+              </div>
+
+              <div className="min-w-0">
+                <label className="block text-xs min-[380px]:text-sm sm:text-base font-medium mb-1.5 sm:mb-2 tracking-[-0.02em]">
+                  Время
+                </label>
+                <input
+                  type="time"
+                  value={isAllDay ? '' : time}
+                  onChange={(e) => setTime(e.target.value)}
+                  disabled={isAllDay}
+                  className="
+                    w-full min-w-0
+                    px-4 py-2.5 sm:py-3
+                    border rounded-2xl
+                    focus:outline-none focus:ring-2 focus:ring-emerald-500
+                    disabled:bg-gray-100
+                    text-sm sm:text-base
+                  "
+                />
+              </div>
+
+              {/* На весь день */}
+              <div className="flex items-center gap-2 mt-0.5 col-span-2">
+                <input
+                  type="checkbox"
+                  id="isAllDay"
+                  checked={isAllDay}
+                  onChange={(e) => {
+                    setIsAllDay(e.target.checked);
+                    if (e.target.checked) setTime('');
+                  }}
+                  className="w-4 h-4 rounded accent-[#1F2421]"
+                />
+                <label className="text-xs min-[380px]:text-sm text-gray-600 tracking-[-0.02em]" htmlFor="isAllDay">
+                  На весь день (без времени)
+                </label>
+              </div>
+            </div>
+
+            {/* Напоминание и Повтор — нативные select (без кастомной стрелки), всегда в одном ряду */}
+            {!isHistoricalTask && (
+              <div className="grid grid-cols-2 gap-3 min-[380px]:gap-4 mb-5 sm:mb-8">
+                <div className="min-w-0">
+                  <label className="block text-xs min-[380px]:text-sm sm:text-base font-medium mb-1.5 sm:mb-2 tracking-[-0.02em]">
+                    Напоминание
+                  </label>
+                  <select
+                    value={reminder}
+                    onChange={(e) => setReminder(e.target.value)}
+                    disabled={!time}
+                    className={`
+                      w-full min-w-0
+                      px-4 py-2.5 sm:py-3
+                      border rounded-2xl
+                      focus:outline-none focus:ring-2 focus:ring-emerald-500
+                      text-sm sm:text-base
+                      ${!time ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}
+                    `}
                   >
-                    Укажите время, чтобы включить напоминание
-                  </p>
+                    {reminderOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  {!time && (
+                    <p className="text-center text-[11px] min-[380px]:text-xs text-gray-500 mt-1 tracking-[-0.02em]">
+                      Укажите время
+                    </p>
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <label className="block text-xs min-[380px]:text-sm sm:text-base font-medium mb-1.5 sm:mb-2 tracking-[-0.02em]">
+                    Повтор
+                  </label>
+                  <select
+                    value={recurrence}
+                    onChange={(e) => setRecurrence(e.target.value)}
+                    className="
+                      w-full min-w-0
+                      px-4 py-2.5 sm:py-3
+                      border rounded-2xl
+                      focus:outline-none focus:ring-2 focus:ring-emerald-500
+                      text-sm sm:text-base
+                      bg-white
+                    "
+                  >
+                    {recurrenceOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {/* Кнопки */}
+            <div className="flex gap-2 min-[380px]:gap-3 sm:gap-4 pt-0.5">
+              <button
+                onClick={onClose}
+                className="
+                  flex-1
+                  py-2.5 min-[380px]:py-3 sm:py-3.5
+                  border border-gray-300 text-gray-700
+                  rounded-2xl font-medium
+                  hover:bg-gray-50 transition-colors
+                  text-sm sm:text-base
+                "
+              >
+                Отмена
+              </button>
+
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="
+                  flex-1
+                  py-2.5 min-[380px]:py-3 sm:py-3.5
+                  bg-emerald-500 text-white
+                  rounded-2xl font-medium
+                  hover:bg-emerald-600
+                  disabled:bg-emerald-300 disabled:cursor-not-allowed
+                  flex items-center justify-center gap-2
+                  transition-colors
+                  text-sm sm:text-base
+                "
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="animate-spin">⏳</span>
+                    <span className="text-sm sm:text-base">Добавление...</span>
+                  </>
+                ) : (
+                  'Добавить задачу'
                 )}
-              </div>
-
-              {/* Повтор */}
-              <div className="mb-6 sm:mb-8">
-                <label 
-                  className="block text-sm sm:text-base font-medium mb-2"
-                  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-                >
-                  Повтор
-                </label>
-                <select 
-                  value={recurrence} 
-                  onChange={(e) => setRecurrence(e.target.value)}
-                  className="w-full px-4 py-2.5 sm:py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm sm:text-base"
-                  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-                >
-                  {recurrenceOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-            </>
-          )}
-
-
-
-          {/* Кнопки */}
-          <div className="flex gap-3 sm:gap-4 pt-1">
-            <button 
-              onClick={onClose}
-              className="flex-1 py-3 sm:py-3.5 border border-gray-300 text-gray-700 rounded-2xl font-medium hover:bg-gray-50 transition-colors"
-              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-            >
-              Отмена
-            </button>
-            <button 
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="flex-1 py-3 sm:py-3.5 bg-emerald-500 text-white rounded-2xl font-medium hover:bg-emerald-600 disabled:bg-emerald-300 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
-              style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="animate-spin">⏳</span>
-                  Добавление...
-                </>
-              ) : (
-                'Добавить задачу'
-              )}
-            </button>
+              </button>
+            </div>
           </div>
         </div>
       </div>

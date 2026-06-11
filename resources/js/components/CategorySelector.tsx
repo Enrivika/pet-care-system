@@ -1,12 +1,15 @@
 import React from 'react';
 import { CATEGORIES } from '../utils/categories';
 
+type CategoryItem = { name: string; color: string };
+
 interface CategorySelectorProps {
   selected: string;
   onSelect: (category: string) => void;
   isMedical?: boolean;
   onIsMedicalChange?: (value: boolean) => void;
   showMedicalCheckbox?: boolean; // показывать чекбокс только когда выбрано "Другое"
+  categoriesOverride?: CategoryItem[]; // ← NEW: если передан — используем его вместо CATEGORIES
 }
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({
@@ -15,11 +18,14 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   isMedical = false,
   onIsMedicalChange,
   showMedicalCheckbox = true,
+  categoriesOverride,
 }) => {
+  const categories = categoriesOverride ?? CATEGORIES;
+
   return (
     <div>
       <div className="grid grid-cols-2 min-[380px]:grid-cols-3 md:grid-cols-4 gap-2">
-        {CATEGORIES.map((cat) => {
+        {categories.map((cat) => {
           const isSelected = selected === cat.name;
           return (
             <button
@@ -27,9 +33,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
               type="button"
               onClick={() => onSelect(cat.name)}
               className={`flex items-center justify-center gap-1.5 px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-medium transition-all ${
-                isSelected
-                  ? 'ring-2 ring-[#4BBB71] scale-[1.02] bg-white'
-                  : ''
+                isSelected ? 'ring-2 ring-[#4BBB71] scale-[1.02] bg-white' : ''
               }`}
               style={
                 isSelected
@@ -56,7 +60,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
             id="isMedical"
             checked={isMedical}
             onChange={(e) => onIsMedicalChange(e.target.checked)}
-            className="w-4 h-4 accent-emerald-500"
+            className="w-4 h-4 rounded accent-[#1F2421]"
           />
           <label htmlFor="isMedical" className="text-sm text-gray-600">
             Является ли задача медицинской?

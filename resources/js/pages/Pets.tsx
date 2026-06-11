@@ -20,9 +20,6 @@ const Pets = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
 
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingPet, setEditingPet] = useState<any>(null);
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [petToDelete, setPetToDelete] = useState<{ id: number; name: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -94,21 +91,6 @@ const Pets = () => {
     } finally {
       setIsAdding(false);
     }
-  };
-
-  // === Редактирование питомца (из списка) ===
-  const handleEditPet = (pet: any) => {
-    setEditingPet({ ...pet });
-    setShowEditModal(true);
-  };
-
-  const handleUpdatePet = async () => {
-    if (!editingPet) return;
-
-    toast.success(`Питомец "${editingPet.name}" обновлён!`);
-    setShowEditModal(false);
-    setEditingPet(null);
-    dispatch(fetchPets() as any);
   };
 
   // === Редактирование питомца ИЗ ПРОФИЛЯ ===
@@ -508,67 +490,6 @@ const Pets = () => {
     </div>
   </div>
 )}
-
-      {/* Модалка редактирования питомца (из списка) */}
-      {showEditModal && editingPet && (
-        <div 
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-[120]"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setShowEditModal(false);
-              setEditingPet(null);
-            }
-          }}
-        >
-          <div 
-            className="bg-white rounded-3xl w-full max-w-md p-8 mx-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-2xl font-bold text-center mb-6">Редактирование питомца</h2>
-
-            <div className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium mb-2">Имя питомца *</label>
-                <input
-                  type="text"
-                  value={editingPet.name}
-                  onChange={(e) => setEditingPet({ ...editingPet, name: e.target.value })}
-                  className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Возраст</label>
-                <input
-                  type="number"
-                  value={editingPet.age || ''}
-                  onChange={(e) => setEditingPet({ ...editingPet, age: e.target.value })}
-                  className="w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-4 mt-8">
-              <button
-                onClick={() => {
-                  setShowEditModal(false);
-                  setEditingPet(null);
-                }}
-                className="flex-1 py-3 border border-gray-300 rounded-2xl hover:bg-gray-50"
-              >
-                Отмена
-              </button>
-              <button
-                onClick={handleUpdatePet}
-                className="flex-1 py-3 bg-emerald-500 text-white rounded-2xl hover:bg-emerald-600"
-              >
-                Сохранить изменения
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Удаление питомца */}
       <DeletePetModal

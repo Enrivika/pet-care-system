@@ -292,215 +292,280 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
   return (
     <>
       <div
-        className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]"
+        className="
+          fixed inset-0 bg-black/60 z-[110]
+          flex items-center justify-center
+        "
+        style={{
+          padding:
+            'max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left))',
+          fontFamily: 'Inter, sans-serif',
+        }}
         onClick={handleBackdropClick}
       >
         <div
-          className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden relative mx-4"
+          className="
+            bg-white w-full
+            max-w-[520px] sm:max-w-xl
+            rounded-3xl shadow-2xl overflow-hidden relative
+            max-h-[calc(100vh-24px)]
+          "
           onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Профиль пользователя"
         >
-          {/* Кнопка закрытия */}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
-          >
-            ✕
-          </button>
+          {/* Скролл только внутри, когда контента больше max-height */}
+          <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 24px)' }}>
+            {/* Кнопка закрытия */}
+            <button
+              onClick={onClose}
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600 z-10 transition-colors"
+              aria-label="Закрыть"
+            >
+              ✕
+            </button>
 
-          {/* Аватар + кнопка загрузки */}
-          <div className="px-8 pt-8 pb-4 flex flex-col items-center">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-emerald-100 flex items-center justify-center">
-                {currentAvatarSrc ? (
-                  <img
-                    src={currentAvatarSrc}
-                    alt="Аватар"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <User className="w-12 h-12 text-emerald-600" />
+            {/* Аватар + кнопка загрузки */}
+            <div className="px-4 pt-4 pb-3 min-[380px]:px-5 sm:px-8 sm:pt-7 sm:pb-5 flex flex-col items-center">
+              <div className="relative">
+                <div className="w-20 h-20 min-[380px]:w-24 min-[380px]:h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-emerald-100 flex items-center justify-center">
+                  {currentAvatarSrc ? (
+                    <img src={currentAvatarSrc} alt="Аватар" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-10 h-10 min-[380px]:w-12 min-[380px]:h-12 text-emerald-600" />
+                  )}
+                </div>
+
+                {/* Кнопка удаления сохранённого аватара */}
+                {user?.avatar && !removeAvatar && !avatarPreview && (
+                  <button
+                    onClick={handleRemoveAvatar}
+                    className="
+                      absolute -top-1 -right-1
+                      bg-white border border-gray-200
+                      hover:bg-gray-50 hover:border-gray-300
+                      p-1.5 rounded-full shadow
+                      flex items-center justify-center
+                      transition-colors
+                    "
+                    title="Удалить фото"
+                    aria-label="Удалить фото"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                  </button>
                 )}
-              </div>
 
-              {/* Кнопка удаления сохранённого аватара */}
-              {user?.avatar && !removeAvatar && !avatarPreview && (
+                {/* Кнопка отмены выбора нового фото */}
+                {(avatarFile || avatarPreview) && (
+                  <button
+                    onClick={handleRemoveAvatar}
+                    className="
+                      absolute -top-1 -right-1
+                      bg-white border border-gray-200
+                      hover:bg-gray-50 hover:border-gray-300
+                      p-1.5 rounded-full shadow
+                      flex items-center justify-center
+                      transition-colors
+                    "
+                    title="Отменить выбор"
+                    aria-label="Отменить выбор"
+                  >
+                    <span className="text-[10px] leading-none font-bold text-gray-500">✕</span>
+                  </button>
+                )}
+
                 <button
-                  onClick={handleRemoveAvatar}
-                  className="absolute -top-1 -right-1 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full shadow flex items-center justify-center"
-                  title="Удалить фото"
+                  onClick={handleAvatarButtonClick}
+                  className="
+                    absolute -bottom-1 -right-1
+                    bg-emerald-500 hover:bg-emerald-600
+                    text-white
+                    text-[11px] min-[380px]:text-xs
+                    px-3 py-1
+                    rounded-full flex items-center gap-1 shadow
+                    transition-colors
+                  "
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  {currentAvatarSrc ? 'Изменить фото' : 'Загрузить фото'}
                 </button>
-              )}
 
-              {/* Кнопка отмены выбора нового фото */}
-              {(avatarFile || avatarPreview) && (
-                <button
-                  onClick={handleRemoveAvatar}
-                  className="absolute -top-1 -right-1 bg-gray-500 hover:bg-gray-600 text-white p-1.5 rounded-full shadow flex items-center justify-center"
-                  title="Отменить выбор"
-                >
-                  <span className="text-[10px] leading-none font-bold">✕</span>
-                </button>
-              )}
-
-              <button
-                onClick={handleAvatarButtonClick}
-                className="absolute -bottom-1 -right-1 bg-emerald-500 hover:bg-emerald-600 text-white text-xs px-3 py-1 rounded-full flex items-center gap-1 shadow"
-              >
-                {currentAvatarSrc ? 'Изменить фото' : 'Загрузить фото'}
-              </button>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleAvatarChange}
-              />
-            </div>
-
-            {/* Подсказка при удалении */}
-            {removeAvatar && (
-              <div className="mt-2 flex items-center gap-2 text-center">
-                <span className="text-xs text-red-600">Фото будет удалено при сохранении</span>
-                <button
-                  onClick={handleCancelRemoval}
-                  className="text-xs text-emerald-600 hover:underline"
-                >
-                  Отменить
-                </button>
-              </div>
-            )}
-
-            <h2 className="text-2xl font-bold mt-4">Личные данные</h2>
-          </div>
-
-          <div className="px-8 pb-8 space-y-6">
-            {/* Имя */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Имя</label>
-              <div className={`flex items-center gap-2 border rounded-2xl px-4 py-3 transition-colors ${editingField === 'name' ? 'bg-white border-emerald-300' : 'bg-gray-100 border-gray-200'}`}>
-                <button
-                  type="button"
-                  onClick={() => (editingField === 'name' ? finishEditing() : startEditing('name'))}
-                  className="text-emerald-600 hover:text-emerald-700 flex-shrink-0"
-                >
-                  {editingField === 'name' ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Pencil className="w-4 h-4" />
-                  )}
-                </button>
                 <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={editingField !== 'name'}
-                  className={`flex-1 outline-none bg-transparent ${editingField === 'name' ? 'text-gray-900' : 'text-gray-700'}`}
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
                 />
               </div>
+
+              <h2 className="text-lg min-[380px]:text-xl sm:text-2xl font-bold mt-3 sm:mt-4 tracking-[-0.02em]">
+                Личные данные
+              </h2>
             </div>
 
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
-              <div className={`flex items-center gap-2 border rounded-2xl px-4 py-3 transition-colors ${editingField === 'email' ? 'bg-white border-emerald-300' : 'bg-gray-100 border-gray-200'}`}>
-                <button
-                  type="button"
-                  onClick={() => (editingField === 'email' ? finishEditing() : startEditing('email'))}
-                  className="text-emerald-600 hover:text-emerald-700 flex-shrink-0"
+            <div className="px-4 pb-4 min-[380px]:px-5 sm:px-8 sm:pb-7 space-y-5 sm:space-y-6">
+              {/* Имя */}
+              <div>
+                <label className="block text-xs min-[380px]:text-sm font-medium text-gray-600 mb-1">Имя</label>
+                <div
+                  className={`flex items-center gap-2 border rounded-2xl px-4 py-3 transition-colors ${
+                    editingField === 'name' ? 'bg-white border-emerald-300' : 'bg-gray-100 border-gray-200'
+                  }`}
                 >
-                  {editingField === 'email' ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Pencil className="w-4 h-4" />
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => (editingField === 'name' ? finishEditing() : startEditing('name'))}
+                    className="text-emerald-600 hover:text-emerald-700 flex-shrink-0 transition-colors"
+                    aria-label={editingField === 'name' ? 'Подтвердить имя' : 'Редактировать имя'}
+                  >
+                    {editingField === 'name' ? <Check className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+                  </button>
+
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    disabled={editingField !== 'name'}
+                    className={`flex-1 outline-none bg-transparent text-sm sm:text-base ${
+                      editingField === 'name' ? 'text-gray-900' : 'text-gray-700'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-xs min-[380px]:text-sm font-medium text-gray-600 mb-1">Email</label>
+                <div
+                  className={`flex items-center gap-2 border rounded-2xl px-4 py-3 transition-colors ${
+                    editingField === 'email' ? 'bg-white border-emerald-300' : 'bg-gray-100 border-gray-200'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => (editingField === 'email' ? finishEditing() : startEditing('email'))}
+                    className="text-emerald-600 hover:text-emerald-700 flex-shrink-0 transition-colors"
+                    aria-label={editingField === 'email' ? 'Подтвердить email' : 'Редактировать email'}
+                  >
+                    {editingField === 'email' ? <Check className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
+                  </button>
+
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={editingField !== 'email'}
+                    className={`flex-1 outline-none bg-transparent text-sm sm:text-base ${
+                      editingField === 'email' ? 'text-gray-900' : 'text-gray-700'
+                    }`}
+                  />
+                </div>
+              </div>
+
+              {/* Безопасность */}
+              <div>
+                <label className="block text-xs min-[380px]:text-sm font-medium text-gray-600 mb-2">Безопасность</label>
+                <button
+                  onClick={() => setShowChangePassword(true)}
+                  className="w-full py-3 sm:py-3.5 border rounded-2xl font-medium transition-colors text-sm sm:text-base"
+                  style={{
+                    color: '#1F2421',
+                    borderColor: '#1F2421',
+                    backgroundColor: '#FFFFFF',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#F3F4F6'; // сероватый hover
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#FFFFFF';
+                  }}
+                >
+                  Изменить пароль
                 </button>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={editingField !== 'email'}
-                  className={`flex-1 outline-none bg-transparent ${editingField === 'email' ? 'text-gray-900' : 'text-gray-700'}`}
-                />
+              </div>
+
+              {/* Настройки уведомлений */}
+              <div>
+                <label className="block text-xs min-[380px]:text-sm font-medium text-gray-600 mb-4">
+                  Настройки уведомлений:
+                </label>
+
+                <div className="space-y-4">
+                  {/* Push */}
+                  <div className={`flex items-center justify-between ${pushLoading ? 'opacity-60 pointer-events-none' : ''}`}>
+                    <span className="text-sm">Push-уведомления</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={pushEnabled}
+                        onChange={handlePushToggle}
+                        disabled={pushLoading}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                  </div>
+
+                  {/* Email */}
+                  <div className={`flex items-center justify-between ${emailLoading ? 'opacity-60 pointer-events-none' : ''}`}>
+                    <span className="text-sm">Email-уведомления</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={emailEnabled}
+                        onChange={handleEmailToggle}
+                        disabled={emailLoading}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Безопасность */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">Безопасность</label>
+            {/* Кнопки */}
+            <div className="px-4 pb-4 min-[380px]:px-5 sm:px-8 sm:pb-7 flex flex-col sm:flex-row gap-3 bg-white">
               <button
-                onClick={() => setShowChangePassword(true)}
-                className="w-full py-3.5 bg-emerald-500 text-white rounded-2xl font-medium hover:bg-emerald-600"
+                onClick={handleSave}
+                disabled={loading}
+                className="
+                  w-full sm:flex-1
+                  py-3 sm:py-3.5
+                  bg-emerald-500 text-white
+                  rounded-2xl font-medium
+                  hover:bg-emerald-600
+                  disabled:opacity-70
+                  transition-colors
+                  text-sm sm:text-base
+                "
               >
-                Изменить пароль
+                {loading ? 'Сохранение...' : 'Сохранить изменения'}
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="
+                  w-full sm:flex-1
+                  py-3 sm:py-3.5
+                  border border-red-500 text-red-500
+                  rounded-2xl font-medium
+                  hover:bg-red-50
+                  flex items-center justify-center gap-2
+                  transition-colors
+                  text-sm sm:text-base
+                "
+              >
+                <LogOut className="w-4 h-4" />
+                Выйти из аккаунта
               </button>
             </div>
-
-            {/* Настройки уведомлений */}
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-4">Настройки уведомлений:</label>
-
-              <div className="space-y-4">
-                {/* Push */}
-                <div className={`flex items-center justify-between ${pushLoading ? 'opacity-60 pointer-events-none' : ''}`}>
-                  <span className="text-sm">Push-уведомления</span>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={pushEnabled}
-                      onChange={handlePushToggle}
-                      disabled={pushLoading}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                  </label>
-                </div>
-
-                {/* Email */}
-                <div className={`flex items-center justify-between ${emailLoading ? 'opacity-60 pointer-events-none' : ''}`}>
-                  <span className="text-sm">Email-уведомления</span>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={emailEnabled}
-                      onChange={handleEmailToggle}
-                      disabled={emailLoading}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Кнопки */}
-          <div className="px-8 pb-8 space-y-3">
-            <button
-              onClick={handleSave}
-              disabled={loading}
-              className="w-full py-3.5 bg-emerald-500 text-white rounded-2xl font-medium hover:bg-emerald-600 disabled:opacity-70"
-            >
-              {loading ? 'Сохранение...' : 'Сохранить изменения'}
-            </button>
-
-            <button
-              onClick={handleLogout}
-              className="w-full py-3.5 border border-red-500 text-red-500 rounded-2xl font-medium hover:bg-red-50 flex items-center justify-center gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Выйти из аккаунта
-            </button>
           </div>
         </div>
       </div>
 
-      <ChangePasswordModal
-        isOpen={showChangePassword}
-        onClose={() => setShowChangePassword(false)}
-      />
+      <ChangePasswordModal isOpen={showChangePassword} onClose={() => setShowChangePassword(false)} />
 
       <EmailVerificationModal
         isOpen={showEmailVerification}
