@@ -5,6 +5,14 @@
 
     RewriteEngine On
 
+    # Force React SPA routes (BrowserRouter) to go through index.php (Laravel)
+    # even when a directory with the same name exists under /public.
+    # (Historically the client route "/pets" collided with the pet photo upload
+    # directory. We now use "images_pets" for uploads to avoid the conflict.)
+    # This only forces the top-level SPA page; asset sub-paths continue to be served statically.
+    RewriteCond %{REQUEST_URI} ^/(dashboard|pets|calendar|health)(/)?$ [NC]
+    RewriteRule ^ index.php [L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

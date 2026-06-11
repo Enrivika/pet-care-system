@@ -23,8 +23,20 @@ Route::get('/', function () {
     return view('app');
 });
 
-// Catch-all for React Router (SPA history mode)
-// This must be the last route in web.php
+// Explicit routes for main SPA pages (React Router handles the rest inside the app).
+// These ensure that hard refreshes on /pets, /dashboard etc. always get the
+// app shell even in some dev server setups.
+Route::get('/dashboard', fn () => view('app'));
+Route::get('/pets', fn () => view('app'));
+Route::get('/calendar', fn () => view('app'));
+Route::get('/health', fn () => view('app'));
+
+// Auth pages (also client-routed)
+Route::get('/login', fn () => view('app'));
+Route::get('/register', fn () => view('app'));
+Route::get('/auth', fn () => view('app'));
+
+// Catch-all for any other React Router paths (must stay last)
 Route::get('/{any}', function () {
     return view('app');
 })->where('any', '^(?!api|build|hot|storage|robots\.txt|favicon\.ico).*$');

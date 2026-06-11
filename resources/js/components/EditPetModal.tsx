@@ -106,7 +106,7 @@ const EditPetModal = ({ isOpen, onClose, pet, onSave }: EditPetModalProps) => {
 />
                 </div>
 
-                <div className="text-center mt-4">
+                <div className="text-center">
                   <span className="text-[#4BBB71] font-semibold text-sm">Сменить фото</span>
                 </div>
 
@@ -122,7 +122,7 @@ const EditPetModal = ({ isOpen, onClose, pet, onSave }: EditPetModalProps) => {
                 <button
                   type="button"
                   onClick={() => setPhoto(null)}
-                  className="mt-2 text-xs text-red-500 hover:text-red-600 self-center md:self-start"
+                  className="text-red-500 hover:text-red-600 font-semibold text-sm"
                 >
                   Убрать фото
                 </button>

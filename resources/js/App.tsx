@@ -5,7 +5,6 @@ import Pets from './pages/Pets';
 import Calendar from './pages/Calendar';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
-import PetProfile from './pages/PetProfile';
 import HealthRecords from './pages/HealthRecords';
 
 function App() {
@@ -37,14 +36,6 @@ function App() {
         <ProtectedRoute>
           <Layout>
             <Calendar />
-          </Layout>
-        </ProtectedRoute>
-      } />
-
-      <Route path="/pets/:id" element={
-        <ProtectedRoute>
-          <Layout>
-            <PetProfile />
           </Layout>
         </ProtectedRoute>
       } />

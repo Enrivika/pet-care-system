@@ -432,7 +432,7 @@ const Pets = () => {
 />
     </div>
 
-    <div className="text-center mt-4">
+    <div className="text-center">
       <span className="text-[#4BBB71] font-semibold text-sm">Загрузить фото</span>
     </div>
 
@@ -448,7 +448,7 @@ const Pets = () => {
     <button
       type="button"
       onClick={() => setPetPhoto(null)}
-      className="mt-2 text-xs text-red-500 hover:text-red-600 self-center md:self-start"
+      className="text-red-500 hover:text-red-600 font-semibold text-sm"
     >
       Убрать фото
     </button>
@@ -570,7 +570,7 @@ const Pets = () => {
         </div>
       )}
 
-      {/* Модалка удаления питомца */}
+      {/* Удаление питомца */}
       <DeletePetModal
         isOpen={showDeleteModal}
         onClose={() => {

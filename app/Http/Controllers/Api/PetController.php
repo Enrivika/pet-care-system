@@ -38,13 +38,13 @@ class PetController extends Controller
             $file = $request->file('photo');
             $filename = time() . '_' . $file->getClientOriginalName();
                         
-            $petsPath = public_path('pets');
+            $petsPath = public_path('images_pets');
             if (!file_exists($petsPath)) {
                 mkdir($petsPath, 0755, true);
             }
             
             $file->move($petsPath, $filename);
-            $photoUrl = '/pets/' . $filename;
+            $photoUrl = '/images_pets/' . $filename;
         }
 
         $pet = auth()->user()->pets()->create([
@@ -90,23 +90,36 @@ class PetController extends Controller
 
         // Фото
         if ($request->hasFile('photo')) {            
-            if ($pet->photo_url && str_starts_with($pet->photo_url, '/pets/')) {
-                $oldPath = public_path(str_replace('/pets/', 'pets/', $pet->photo_url));
-                if (file_exists($oldPath)) {
-                    unlink($oldPath);
+            if ($pet->photo_url) {
+                // Поддерживаем старые пути: оригинальный /pets/ и промежуточный /petsimages/
+                // Всегда маппим на текущую папку images_pets при удалении старого файла
+                $oldRelative = null;
+                if (str_starts_with($pet->photo_url, '/pets/')) {
+                    $oldRelative = str_replace('/pets/', 'images_pets/', $pet->photo_url);
+                } elseif (str_starts_with($pet->photo_url, '/petsimages/')) {
+                    $oldRelative = str_replace('/petsimages/', 'images_pets/', $pet->photo_url);
+                } elseif (str_starts_with($pet->photo_url, '/images_pets/')) {
+                    $oldRelative = str_replace('/images_pets/', 'images_pets/', $pet->photo_url);
+                }
+
+                if ($oldRelative) {
+                    $oldPath = public_path($oldRelative);
+                    if (file_exists($oldPath)) {
+                        unlink($oldPath);
+                    }
                 }
             }
             
             $file = $request->file('photo');
             $filename = time() . '_' . $file->getClientOriginalName();
             
-            $petsPath = public_path('pets');
+            $petsPath = public_path('images_pets');
             if (!file_exists($petsPath)) {
                 mkdir($petsPath, 0755, true);
             }
             
             $file->move($petsPath, $filename);
-            $data['photo_url'] = '/pets/' . $filename;
+            $data['photo_url'] = '/images_pets/' . $filename;
         }
 
         $pet->update($data);
