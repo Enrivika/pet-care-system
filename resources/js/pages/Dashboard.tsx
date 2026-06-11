@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
-import { fetchPets } from '../store/slices/petsSlice';
+import { fetchPets, updatePet } from '../store/slices/petsSlice';
+import { toast } from 'sonner';
 import { fetchAllTasks } from '../store/slices/calendarEventsSlice';
 import { Link } from 'react-router-dom';
 import PetProfileModal from '../components/PetProfileModal';
@@ -234,10 +235,23 @@ const Dashboard = () => {
   };
 
   const handleSavePet = async (updatedPet: any) => {
-    // dispatch(updatePet);
-    setShowEditPetModal(false);
-    setEditingPet(null);
-    dispatch(fetchPets() as any); // обновляем список питомцев
+     try {
+      const formData = new FormData();
+      formData.append('name', updatedPet.name);
+      if (updatedPet.age) formData.append('age', updatedPet.age);
+      if (updatedPet.photo) formData.append('photo', updatedPet.photo);
+ 
+      await dispatch(updatePet({ 
+        petId: updatedPet.id, 
+        formData 
+      }) as any).unwrap();
+ 
+      toast.success(`Питомец "${updatedPet.name}" обновлён!`);
+ 
+      dispatch(fetchPets() as any);
+    } catch (err: any) {
+      toast.error(err || 'Ошибка обновления питомца');
+    }
   };
 
   return (
@@ -624,7 +638,10 @@ const Dashboard = () => {
       
       <EditPetModal
         isOpen={showEditPetModal}
-        onClose={() => setShowEditPetModal(false)}
+       onClose={() => {
+          setShowEditPetModal(false);
+          setEditingPet(null);
+        }}
         pet={editingPet}
         onSave={handleSavePet}
       />

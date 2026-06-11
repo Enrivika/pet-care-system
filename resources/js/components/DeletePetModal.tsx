@@ -1,5 +1,3 @@
-import { toast } from 'sonner';
-
 interface DeletePetModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -8,54 +6,106 @@ interface DeletePetModalProps {
   isLoading?: boolean;
 }
 
-const DeletePetModal = ({ isOpen, onClose, petName, onConfirm, isLoading = false }: DeletePetModalProps) => {
+const DeletePetModal = ({
+  isOpen,
+  onClose,
+  petName,
+  onConfirm,
+  isLoading = false,
+}: DeletePetModalProps) => {
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]"
-      onClick={onClose}
+    <div
+      className="fixed inset-0 bg-black/60 z-[100] px-4 py-4 sm:py-6 flex items-center justify-center"
+      onClick={handleBackdropClick}
+      style={{ fontFamily: 'Inter, sans-serif' }}
     >
-      <div 
-        className="bg-white rounded-3xl w-full max-w-sm p-8 shadow-xl text-center mx-4"
+      <div
+        className="
+          bg-white w-full max-w-md sm:max-w-lg
+          rounded-3xl shadow-2xl relative
+          p-5 sm:p-7 md:p-8
+          max-h-[85dvh] overflow-auto
+        "
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Удалить питомца"
       >
-        <div className="text-6xl mb-4">🗑️</div>
-        
-        <h2 className="text-2xl font-bold text-red-600 mb-3">Удалить питомца?</h2>
-        
-        <p className="text-gray-600 mb-2 text-sm">
-          Это действие <span className="font-semibold">нельзя отменить</span>.
-        </p>
+        <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-red-600 text-center mb-2 sm:mb-3 tracking-[-0.02em]">
+          Удалить питомца?
+        </h2>
 
-        <div className="text-left mb-4">
-          <p className="text-gray-600 text-sm mb-2">
-            Вместе с питомцем <span className="font-semibold">"{petName}"</span> будут безвозвратно удалены:
+        {/* ЕДИНЫЙ размер текста для всей модалки (кроме заголовка и кнопок) */}
+        <div className="text-sm sm:text-base leading-relaxed tracking-[-0.02em]">
+          <p className="text-gray-700 text-center">
+            Вы собираетесь удалить питомца
+            <span className="font-semibold text-gray-900"> {petName}</span>.
+          </p>
+          <p className="text-gray-600 text-center mb-4 sm:mb-6">
+            Это действие нельзя отменить.
           </p>
 
-          <ul className="text-sm text-gray-600 space-y-1 pl-1">
-            <li>• Все запланированные задачи</li>
-            <li>• Все выполненные задачи</li>
-            <li>• Все медицинские записи</li>
-          </ul>
+          {/* Плашка со списком */}
+          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5 mb-4 sm:mb-6">
+            {/* убрали жирное начертание */}
+            <p className="text-gray-800 mb-2">Также будут навсегда удалены:</p>
+
+            <ul className="text-gray-700 space-y-1.5">
+              <li className="flex gap-2 before:content-['-'] before:text-gray-400 before:shrink-0">
+                <span>Все запланированные задачи.</span>
+              </li>
+              <li className="flex gap-2 before:content-['-'] before:text-gray-400 before:shrink-0">
+                <span>Все выполненные задачи.</span>
+              </li>
+              <li className="flex gap-2 before:content-['-'] before:text-gray-400 before:shrink-0">
+                <span>Все медицинские записи.</span>
+              </li>
+            </ul>
+          </div>
+
+          <p className="text-red-600 text-center font-semibold mb-5 sm:mb-7">
+            Никакие данные о питомце не останутся в системе!
+          </p>
         </div>
 
-        <p className="text-red-600 text-sm font-medium mb-6">
-          Никакие данные о питомце не останутся в системе.
-        </p>
-
-        <div className="flex gap-3">
-          <button 
+        <div className="flex gap-3 sm:gap-4">
+          <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 py-3 border border-gray-300 rounded-2xl font-medium hover:bg-gray-50 disabled:opacity-50"
+            className="
+              flex-1
+              py-3 sm:py-3.5 md:py-4
+              border border-gray-300
+              rounded-2xl font-semibold
+              hover:bg-gray-50 transition-colors
+              disabled:opacity-50
+              text-sm sm:text-base tracking-[-0.02em]
+              text-gray-700
+            "
+            type="button"
           >
             Отмена
           </button>
-          <button 
+
+          <button
             onClick={onConfirm}
             disabled={isLoading}
-            className="flex-1 py-3 bg-red-500 text-white rounded-2xl font-medium hover:bg-red-600 disabled:opacity-70"
+            className="
+              flex-1
+              py-3 sm:py-3.5 md:py-4
+              bg-red-600 text-white
+              rounded-2xl font-semibold
+              hover:bg-red-700 transition-colors
+              disabled:opacity-70
+              text-sm sm:text-base tracking-[-0.02em]
+            "
+            type="button"
           >
             {isLoading ? 'Удаление...' : 'Удалить'}
           </button>

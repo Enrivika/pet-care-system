@@ -7,7 +7,6 @@ import { login, updateUser, setAuthAfterVerification } from '../store/slices/aut
 import ForgotPasswordModal from '../components/ForgotPasswordModal';
 import EmailVerificationModal from '../components/EmailVerificationModal';
 import { Eye, EyeOff } from 'lucide-react';
-import Scrollbar from '../components/Scrollbar';
 
 const Auth = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
@@ -127,12 +126,34 @@ const Auth = () => {
   };
 
   return (
-<div className="min-h-[100dvh] bg-[#E8F5E9] px-4 py-3 relative overflow-hidden">
+<div className="min-h-[100dvh] bg-[#E8F5E9] px-4 py-3 relative overflow-hidden flex items-center justify-center">
     {/* Фон */}
     <div className="absolute inset-0 bg-[radial-gradient(#d1fae5_0.8px,transparent_1px)] bg-[length:4px_4px]"></div>
 
-    <Scrollbar className="min-h-[100dvh] flex items-center justify-center">
-      <div className="w-full max-w-md relative z-10">
+      <div className="w-full max-w-md sm:max-w-lg md:max-w-xl relative z-10">
+              <div 
+        className="fixed bottom-20 right-0 lg:bottom-0 z-[70] pointer-events-none select-none"
+        style={{ filter: 'blur(8px)' }}
+      >
+        <div className="rotate-[-30deg] origin-bottom-right -mr-64 -mb-10 sm:-mr-96 sm:-mb-16 md:-mr-128 md:-mb-22 lg:-mr-160 lg:-mb-26 xl:-mr-200 xl:-mb-32">
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            className="w-[500px] h-[450px] sm:w-[650px] sm:h-[580px] md:w-[850px] md:h-[760px] lg:w-[900px] lg:h-[800px] xl:w-[1050px] xl:h-[930px] text-[#1F2421] opacity-10" 
+            viewBox="0 0 320 280" 
+            fill="currentColor"
+          >
+            {/* Left ear */}
+            <polygon points="95,55 55,12 125,38" />
+            {/* Right ear */}
+            <polygon points="225,55 265,12 195,38" />
+            {/* Head (main face) */}
+            <ellipse cx="160" cy="155" rx="105" ry="92" />
+            {/* Inner ears for better shape */}
+            <polygon points="105,52 68,20 118,40" />
+            <polygon points="215,52 252,20 202,40" />
+          </svg>
+        </div>
+      </div>
         
         {/* Логотип + заголовок */}
 <div className="flex flex-col items-center mb-16 sm:mb-6">
@@ -160,7 +181,7 @@ const Auth = () => {
 </div>
 
         {/* === КАРТОЧКА === */}
-        <div className="relative w-full max-w-lg md:max-w-xl mx-auto">
+        <div className="relative w-full max-w-md sm:max-w-lg md:max-w-xl mx-auto">
           
         {/* Кот и собака — десктоп */}
         <div className="absolute left-0 top-0 z-20 hidden sm:block -translate-x-1/2 -translate-y-1/2">
@@ -180,7 +201,7 @@ const Auth = () => {
 </div>
 
           {/* Карточка */}
-          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 relative z-10">
+  <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 relative z-10">
             
             {/* Вкладки */}
             <div className="flex border-b">
@@ -236,23 +257,23 @@ const Auth = () => {
           style={{ fontFamily: 'Inter, sans-serif' }}
         />
         <button
-          type="button"
-          onClick={() => setShowLoginPassword(!showLoginPassword)}
-          className="absolute right-4 top-3 text-gray-400 hover:text-gray-600"
-        >
-          {showLoginPassword ? <Eye size={17} /> : <EyeOff size={17} />}
-        </button>
+  type="button"
+  onClick={() => setShowLoginPassword(!showLoginPassword)}
+  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 flex items-center justify-center"
+>
+  {showLoginPassword ? <Eye size={17} /> : <EyeOff size={17} />}
+</button>
       </div>
     </div>
 
     <div className="flex items-center justify-between text-sm pt-1">
       <label className="flex items-center gap-2 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={rememberMe}
-          onChange={(e) => setRememberMe(e.target.checked)}
-          className="w-4 h-4 accent-emerald-500"
-        />
+<input
+  type="checkbox"
+  checked={rememberMe}
+  onChange={(e) => setRememberMe(e.target.checked)}
+  className="w-4 h-4 rounded border border-gray-300 accent-[#1F2421] checked:bg-[#1F2421] checked:border-[#1F2421]"
+/>
         <span className="text-gray-600 tracking-[-0.02em]" style={{ fontFamily: 'Inter, sans-serif' }}>Запомнить меня</span>
       </label>
 
@@ -309,6 +330,7 @@ const Auth = () => {
     </div>
 
     {/* Пароль */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div>
       <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 tracking-[-0.02em]" style={{ fontFamily: 'Inter, sans-serif' }}>Пароль</label>
       <div className="relative">
@@ -323,12 +345,12 @@ const Auth = () => {
           style={{ fontFamily: 'Inter, sans-serif' }}
         />
         <button
-          type="button"
-          onClick={() => setShowRegPassword(!showRegPassword)}
-          className="absolute right-4 top-3 text-gray-400 hover:text-gray-600"
-        >
-          {showRegPassword ? <Eye size={17} /> : <EyeOff size={17} />}
-        </button>
+  type="button"
+  onClick={() => setShowRegPassword(!showRegPassword)}
+  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 flex items-center justify-center"
+>
+  {showRegPassword ? <Eye size={17} /> : <EyeOff size={17} />}
+</button>
       </div>
     </div>
 
@@ -346,29 +368,30 @@ const Auth = () => {
           style={{ fontFamily: 'Inter, sans-serif' }}
         />
         <button
-          type="button"
-          onClick={() => setShowRegPasswordConfirm(!showRegPasswordConfirm)}
-          className="absolute right-4 top-3 text-gray-400 hover:text-gray-600"
-        >
-          {showRegPasswordConfirm ? <Eye size={17} /> : <EyeOff size={17} />}
-        </button>
+  type="button"
+  onClick={() => setShowRegPasswordConfirm(!showRegPasswordConfirm)}
+  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 flex items-center justify-center"
+>
+  {showRegPasswordConfirm ? <Eye size={17} /> : <EyeOff size={17} />}
+</button>
       </div>
+    </div>
     </div>
 
     {/* Согласие */}
-    <div className="flex items-start gap-3 pt-0.5">
-      <input
-        type="checkbox"
-        id="agree"
-        checked={agree}
-        onChange={(e) => setAgree(e.target.checked)}
-        className="mt-1 w-4 h-4 accent-emerald-500"
-      />
-      <label htmlFor="agree" className="text-xs sm:text-sm text-gray-600 leading-tight tracking-[-0.02em]" style={{ fontFamily: 'Inter, sans-serif' }}>
-        Я согласен с{' '}
-        <a href="#" className="text-emerald-600 hover:underline font-medium">политикой конфиденциальности</a>
-      </label>
-    </div>
+    <div className="flex items-center gap-3 pt-0.5">
+<input
+  type="checkbox"
+  id="agree"
+  checked={agree}
+  onChange={(e) => setAgree(e.target.checked)}
+  className="w-4 h-4 rounded border border-gray-300 accent-[#1F2421] checked:bg-[#1F2421] checked:border-[#1F2421]"
+/>
+  <label htmlFor="agree" className="text-xs sm:text-sm text-gray-600 leading-tight tracking-[-0.02em]" style={{ fontFamily: 'Inter, sans-serif' }}>
+    Я согласен с{' '}
+    <a href="#" className="text-emerald-600 hover:underline font-medium">политикой конфиденциальности</a>
+  </label>
+</div>
 
     <button
       type="submit"
@@ -381,19 +404,10 @@ const Auth = () => {
   </form>
 )}
           </div>
-
-          {/* Нижняя часть */}
-          <div className="px-4 sm:px-5 md:px-8 pb-6 text-center text-sm text-gray-500 tracking-[-0.02em]" style={{ fontFamily: 'Inter, sans-serif' }}>
-            {activeTab === 'login' ? (
-              <>Нет аккаунта? <button onClick={() => setActiveTab('register')} className="text-emerald-600 hover:underline font-medium">Зарегистрироваться</button></>
-            ) : (
-              <>Уже есть аккаунт? <button onClick={() => setActiveTab('login')} className="text-emerald-600 hover:underline font-medium">Войти</button></>
-            )}
-          </div>
         </div>
       </div>
     </div>
-    </Scrollbar>
+    
 
       {/* Модалки */}
       <ForgotPasswordModal isOpen={showForgotModal} onClose={() => setShowForgotModal(false)} />
