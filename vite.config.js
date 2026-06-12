@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
     plugins: [
@@ -11,6 +12,41 @@ export default defineConfig({
         react({
             jsxRuntime: 'automatic',
         }),
+        VitePWA({
+            strategies: 'injectManifest',
+            srcDir: 'public',
+            filename: 'sw.js',
+            registerType: 'autoUpdate',
+            injectRegister: false, // мы регистрируем сами с type: 'module' (потому что SW использует ESM import)
+            includeAssets: ['favicon.ico', 'images/*.png'],
+            manifest: {
+                name: 'Petopia',
+                short_name: 'Petopia',
+                description: 'Информационная система ухода за домашними питомцами',
+                start_url: '/',
+                display: 'standalone',
+                background_color: '#ffffff',
+                theme_color: '#4BBB71',
+                lang: 'ru',
+                scope: '/',
+                icons: [
+                    {
+                        src: '/images/Petopia-192.png',
+                        sizes: '192x192',
+                        type: 'image/png'
+                    },
+                    {
+                        src: '/images/Petopia.png',
+                        sizes: '512x512',
+                        type: 'image/png'
+                    }                                       
+                    
+                ]
+            },
+            devOptions: {
+                enabled: true
+            }
+        })
     ],
     server: {
         host: 'localhost',

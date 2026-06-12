@@ -1,3 +1,15 @@
+<IfModule mod_headers.c>
+    <FilesMatch "sw\.js$">
+        Header set Service-Worker-Allowed "/"
+        Header set Content-Type "application/javascript; charset=utf-8"
+    </FilesMatch>
+    # Для SW в билде
+    <FilesMatch "build/sw\.js$">
+        Header set Service-Worker-Allowed "/"
+        Header set Content-Type "application/javascript; charset=utf-8"
+    </FilesMatch>
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

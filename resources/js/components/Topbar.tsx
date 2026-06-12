@@ -4,6 +4,7 @@ import { RootState } from '../store';
 import { Link } from 'react-router-dom';
 import { fetchNotifications, markAsRead, markAllAsRead, clearAllNotifications } from '../store/slices/notificationsSlice';
 import { toast } from 'sonner';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 interface TopbarProps {
   onOpenProfile?: () => void;
@@ -49,6 +50,9 @@ const Topbar = ({ onOpenProfile }: TopbarProps) => {
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showNotifications]);
+
+  // PWA install button (кнопка установки приложения)
+  const { canInstall, promptInstall } = usePWAInstall();
 
   const unreadNotifications = notifications.filter(n => !n.read_at);
   const readNotifications = notifications.filter(n => n.read_at);
@@ -160,6 +164,19 @@ const Topbar = ({ onOpenProfile }: TopbarProps) => {
     </svg>
   );
 
+  const InstallIcon = ({ className = "w-7 h-7" }: { className?: string }) => (
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      className={className} 
+      viewBox="0 0 24 24" 
+      fill="#1F2421"
+    >
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+
   return (
     <>
       {/* ========== ВЕРХНЯЯ НАВИГАЦИОННАЯ ПАНЕЛЬ ДЛЯ МОБИЛЬНЫХ И ПЛАНШЕТОВ (< lg) ========== */}
@@ -200,6 +217,18 @@ const Topbar = ({ onOpenProfile }: TopbarProps) => {
               </div>
             )}
           </div>
+
+          {/* Кнопка установки PWA (мобильная) */}
+          {canInstall && (
+            <button 
+              onClick={promptInstall}
+              className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center hover:opacity-80 active:scale-[0.95] transition-all"
+              aria-label="Установить приложение"
+              title="Установить приложение"
+            >
+              <InstallIcon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+            </button>
+          )}
 
           {/* Аватар профиля в белом кругу */}
           <button 
@@ -287,6 +316,18 @@ const Topbar = ({ onOpenProfile }: TopbarProps) => {
                 </div>
               )}
             </div>
+
+            {/* Кнопка установки PWA (десктоп) */}
+            {canInstall && (
+              <button 
+                onClick={promptInstall}
+                className="w-8 h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 xl:w-11 xl:h-11 2xl:w-12 2xl:h-12 bg-white rounded-full flex items-center justify-center hover:opacity-80 active:scale-[0.95] transition-all shadow-sm"
+                aria-label="Установить приложение"
+                title="Установить приложение"
+              >
+                <InstallIcon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 xl:w-8 xl:h-8 2xl:w-9 2xl:h-9" />
+              </button>
+            )}
 
             {/* Профиль - структура иконки полностью как в мобильной панели (внутренняя заливка #1F2421) */}
             <button 

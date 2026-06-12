@@ -10,9 +10,11 @@ export async function subscribeToPush(): Promise<boolean> {
   }
 
   try {
-    // Регистрируем Service Worker
-    const registration = await navigator.serviceWorker.register('/sw.js');
-    console.log('Service Worker зарегистрирован');
+    // Дожидаемся готовности Service Worker.
+    // PWA SW регистрируется в registerSW.ts с type: 'module'.
+    // Используем ready, чтобы push-логика работала с тем же SW.
+    const registration = await navigator.serviceWorker.ready;
+    console.log('[Push] Service Worker готов (PWA)');
 
     // Запрашиваем разрешение
     const permission = await Notification.requestPermission();
