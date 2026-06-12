@@ -98,25 +98,26 @@ const Topbar = ({ onOpenProfile }: TopbarProps) => {
       </div>
 
       <div className={compact ? "max-h-[50vh] overflow-y-auto" : "max-h-[420px] overflow-y-auto"}>
-        {loading ? (
+        {loading && notifications.length === 0 ? (
           <div className="p-8 text-center text-gray-500">Загрузка...</div>
         ) : (activeTab === 'unread' ? unreadNotifications : readNotifications).length > 0 ? (
           (activeTab === 'unread' ? unreadNotifications : readNotifications).map((notif) => (
-            <div key={notif.id} onClick={() => handleMarkAsRead(notif.id)} className="p-4 border-b hover:bg-gray-50 cursor-pointer flex gap-3">
+            <div 
+              key={notif.id} 
+              onClick={() => handleMarkAsRead(notif.id)} 
+              className="p-4 border-b hover:bg-gray-50 cursor-pointer flex gap-3"
+            >
               <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">🐾</div>
               <div className="flex-1 min-w-0">
-                <div 
-                  className="font-semibold text-gray-900"
-                  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-                >{notif.title}</div>
-                <div 
-                  className="text-sm text-gray-600 line-clamp-2 mt-0.5"
-                  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-                >{notif.body}</div>
-                <div 
-                  className="text-xs text-gray-400 mt-1"
-                  style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}
-                >{new Date(notif.created_at).toLocaleDateString('ru-RU')}</div>
+                <div className="font-semibold text-gray-900" style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>
+                  {notif.title}
+                </div>
+                <div className="text-sm text-gray-600 line-clamp-2 mt-0.5" style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>
+                  {notif.body}
+                </div>
+                <div className="text-xs text-gray-400 mt-1" style={{ fontFamily: 'Inter, sans-serif', letterSpacing: '-0.02em' }}>
+                  {new Date(notif.created_at).toLocaleDateString('ru-RU')}
+                </div>
               </div>
             </div>
           ))
