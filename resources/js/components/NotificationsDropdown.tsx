@@ -45,8 +45,8 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ show, onC
     : "absolute right-0 mt-3 w-96 bg-white rounded-3xl shadow-2xl border z-[100] overflow-hidden";
 
   const contentClasses = isMobile 
-    ? "bg-white w-full max-w-md mx-4 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]" 
-    : "bg-white w-full";
+    ? "bg-white w-full max-w-md mx-4 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[min(620px,80vh)]" 
+    : "bg-white w-full flex flex-col max-h-[min(520px,calc(100dvh-6rem))]";
 
   return (
     <div 
@@ -96,7 +96,8 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ show, onC
           </button>
         </div>
 
-        <div className="max-h-[420px] overflow-y-auto flex-1">
+        {/* Скроллируемая область списка (flex-1 между табами и прилипшей кнопкой) */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
           {loading ? (
             <div className="p-8 text-center text-gray-500">Загрузка...</div>
           ) : (activeTab === 'unread' ? unreadNotifications : readNotifications).length > 0 ? (
@@ -109,7 +110,19 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ show, onC
                 }} 
                 className="p-4 border-b hover:bg-gray-50 cursor-pointer flex gap-3"
               >
-                <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">🐾</div>
+                <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+                  <img
+                    src={`/images/${notif.category || 'Другое'}.png`}
+                    alt={notif.category || 'Задача'}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      target.style.display = 'none';
+                      const parent = target.parentElement;
+                      if (parent) parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-lg">🐾</div>';
+                    }}
+                  />
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-gray-900">{notif.title}</div>
                   <div className="text-sm text-gray-600 line-clamp-2 mt-0.5">{notif.body}</div>
@@ -124,31 +137,30 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ show, onC
           )}
         </div>
 
-        {(activeTab === 'unread' ? unreadNotifications.length > 0 : readNotifications.length > 0) && (
-          <div className="p-4 border-t bg-gray-50">
-            {activeTab === 'unread' ? (
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleMarkAllAsRead();
-                }}
-                className="w-full py-2 text-sm font-medium text-emerald-600 hover:text-emerald-700"
-              >
-                Пометить все как прочитанные
-              </button>
-            ) : (
-              <button 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClearAll();
-                }}
-                className="w-full py-2 text-sm font-medium text-red-600 hover:text-red-700"
-              >
-                Очистить историю
-              </button>
-            )}
-          </div>
-        )}
+        {/* Прилипшая кнопка всегда внизу (показывается даже если в табе пусто) */}
+        <div className="p-4 border-t bg-gray-50 flex-shrink-0">
+          {activeTab === 'unread' ? (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMarkAllAsRead();
+              }}
+              className="w-full py-2 text-sm font-medium text-emerald-600 hover:text-emerald-700"
+            >
+              Пометить все как прочитанные
+            </button>
+          ) : (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClearAll();
+              }}
+              className="w-full py-2 text-sm font-medium text-red-600 hover:text-red-700"
+            >
+              Очистить историю
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

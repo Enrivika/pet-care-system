@@ -55,7 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     Route::delete('/notifications/clear', [NotificationController::class, 'clearAll']);
-
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
     // Обновление профиля
     Route::post('/user/profile', [AuthController::class, 'updateProfile']);
     Route::post('/user/password', [AuthController::class, 'updatePassword']);

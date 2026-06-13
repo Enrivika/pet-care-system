@@ -39,27 +39,54 @@ class PetReminderNotification extends Notification implements ShouldQueue
         return $channels;
     }
 
-    public function toMail($notifiable)
-    {
-        return (new MailMessage)
-            ->subject('Напоминание: ' . $this->event->title)
-            ->greeting('Привет, ' . $notifiable->name . '!')
-            ->line('Напоминаем о задаче для питомца **' . $this->event->pet->name . '**:')
-            ->line('**' . $this->event->title . '**')
-            ->line('Категория: ' . $this->event->event_type)
-            ->line('Дата и время: ' . $this->event->start_at->format('d.m.Y H:i'))
-            ->action('Посмотреть в Petopia', url('/dashboard'))
-            ->line('Спасибо, что заботишься о своих питомцах!');
+public function toMail($notifiable)
+{
+    $link = url('/dashboard');
+
+    $mail = (new MailMessage)
+        ->subject('Petopia')
+        ->greeting('Привет, ' . $notifiable->name . '!')
+        ->line('Напоминаем о задаче для питомца **' . $this->event->pet->name . '**!')
+        ->line('Категория: **' . $this->event->event_type . '**');
+
+    // Название: показываем только если оно есть
+    $title = trim((string) ($this->event->title ?? ''));
+    if ($title !== '') {
+        $mail->line('Название: **' . $title . '**');
     }
 
-    public function toWebPush($notifiable, $notification)
-    {
-        return (new WebPushMessage)
-            ->title('Напоминание: ' . $this->event->title)
-            ->body('Задача для ' . $this->event->pet->name . ' в ' . $this->event->start_at->format('H:i'))
-            ->icon('/images/Petopia.png')
-            ->data(['url' => url('/dashboard')]);
+    $mail
+        ->line('Дата и время: **' . $this->event->start_at->format('d.m.Y') . ' в ' . $this->event->start_at->format('H:i') . '**')
+        ->action('Посмотреть в Petopia', $link)
+        ->line('Спасибо, что ухаживаешь за своими питомцами!');
+
+    return $mail;
+}
+
+public function toWebPush($notifiable, $notification)
+{
+    $category = (string) $this->event->event_type;
+    $petName  = (string) $this->event->pet->name;
+
+    $when = $this->event->start_at->format('d.m.Y') . ' в ' . $this->event->start_at->format('H:i');
+
+    $title = 'Напоминание: ' . $category . ' для ' . $petName;
+
+    $lines = [
+        'Дата и время: ' . $when,
+    ];
+
+    $eventTitle = trim((string) ($this->event->title ?? ''));
+    if ($eventTitle !== '') {
+        $lines[] = 'Название: ' . $eventTitle;
     }
+
+    return (new WebPushMessage)
+        ->title($title)
+        ->body(implode("\n", $lines))
+        ->icon('/images/Petopia.png')
+        ->data(['url' => '/dashboard']);
+}
     
     public function toDatabase($notifiable)
     {        
@@ -74,7 +101,7 @@ class PetReminderNotification extends Notification implements ShouldQueue
                 'event_id' => $this->event->id,
                 'type'    => 'reminder',
                 'title'   => 'Напоминание: ' . $this->event->title,
-                'body'    => 'Задача для ' . $this->event->pet->name . ' в ' . $this->event->start_at->format('H:i'),
+                'body'    => $this->event->event_type . ' • Задача для ' . $this->event->pet->name . ' — ' . $this->event->start_at->format('d.m.Y H:i'),
             ]);
 
             $this->event->update(['reminder_sent_at' => now()]);

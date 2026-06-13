@@ -12,10 +12,18 @@ class NotificationController extends Controller
     public function index()
     {
         $notifications = Notification::where('user_id', auth()->id())
+            ->with('event:id,event_type')
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return response()->json($notifications);
+        $data = $notifications->map(function ($n) {
+            $arr = $n->toArray();
+            $arr['category'] = $n->event?->event_type;
+            unset($arr['event']);
+            return $arr;
+        });
+
+        return response()->json($data);
     }
 
     // Отметить уведомление как прочитанное
@@ -45,5 +53,16 @@ class NotificationController extends Controller
         Notification::where('user_id', auth()->id())->delete();
 
         return response()->json(['message' => 'История уведомлений очищена']);
+    }
+
+    // Удалить одно уведомление
+    public function destroy($id)
+    {
+        $notification = Notification::where('user_id', auth()->id())
+            ->findOrFail($id);
+
+        $notification->delete();
+
+        return response()->json(['message' => 'Уведомление удалено']);
     }
 }

@@ -9,7 +9,15 @@ interface NotificationsModalProps {
 
 const NotificationsModal = ({ isOpen, onClose }: NotificationsModalProps) => {
   const [activeTab, setActiveTab] = useState<'unread' | 'read'>('unread');
-  const [notifications, setNotifications] = useState<any[]>([]);
+  interface LocalNotification {
+    id: number;
+    title: string;
+    body: string;
+    created_at: string;
+    read_at?: string | null;
+    category?: string;
+  }
+  const [notifications, setNotifications] = useState<LocalNotification[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Загрузка уведомлений
@@ -76,7 +84,7 @@ const NotificationsModal = ({ isOpen, onClose }: NotificationsModalProps) => {
       onClick={onClose}
     >
       <div 
-        className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden mx-2"
+        className="bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden mx-2 flex flex-col max-h-[min(620px,calc(100dvh-5rem))]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Заголовок */}
@@ -101,8 +109,8 @@ const NotificationsModal = ({ isOpen, onClose }: NotificationsModalProps) => {
           </button>
         </div>
 
-        {/* Список уведомлений */}
-        <div className="max-h-[500px] overflow-y-auto">
+        {/* Список уведомлений — скроллится, когда нужно. Кнопки внизу всегда видны */}
+        <div className="flex-1 min-h-0 overflow-y-auto">
           {loading ? (
             <div className="text-center py-12 text-gray-500">Загрузка...</div>
           ) : activeTab === 'unread' ? (
@@ -111,12 +119,27 @@ const NotificationsModal = ({ isOpen, onClose }: NotificationsModalProps) => {
                 <div 
                   key={notif.id} 
                   onClick={() => markAsRead(notif.id)}
-                  className="p-4 border-b hover:bg-gray-50 cursor-pointer"
+                  className="p-4 border-b hover:bg-gray-50 cursor-pointer flex gap-3"
                 >
-                  <div className="font-medium text-gray-900">{notif.title}</div>
-                  <div className="text-sm text-gray-600 mt-1">{notif.body}</div>
-                  <div className="text-xs text-gray-400 mt-2">
-                    {new Date(notif.created_at).toLocaleDateString('ru-RU')}
+                  <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+                    <img
+                      src={`/images/${notif.category || 'Другое'}.png`}
+                      alt={notif.category || 'Задача'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-lg">🐾</div>';
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900">{notif.title}</div>
+                    <div className="text-sm text-gray-600 mt-1">{notif.body}</div>
+                    <div className="text-xs text-gray-400 mt-2">
+                      {new Date(notif.created_at).toLocaleDateString('ru-RU')}
+                    </div>
                   </div>
                 </div>
               ))
@@ -126,11 +149,26 @@ const NotificationsModal = ({ isOpen, onClose }: NotificationsModalProps) => {
           ) : (
             readNotifications.length > 0 ? (
               readNotifications.map((notif) => (
-                <div key={notif.id} className="p-4 border-b opacity-70">
-                  <div className="font-medium text-gray-900">{notif.title}</div>
-                  <div className="text-sm text-gray-600 mt-1">{notif.body}</div>
-                  <div className="text-xs text-gray-400 mt-2">
-                    {new Date(notif.created_at).toLocaleDateString('ru-RU')}
+                <div key={notif.id} className="p-4 border-b opacity-70 flex gap-3">
+                  <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
+                    <img
+                      src={`/images/${notif.category || 'Другое'}.png`}
+                      alt={notif.category || 'Задача'}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-lg">🐾</div>';
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-gray-900">{notif.title}</div>
+                    <div className="text-sm text-gray-600 mt-1">{notif.body}</div>
+                    <div className="text-xs text-gray-400 mt-2">
+                      {new Date(notif.created_at).toLocaleDateString('ru-RU')}
+                    </div>
                   </div>
                 </div>
               ))

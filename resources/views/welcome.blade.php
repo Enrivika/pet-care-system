@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Care System</title>
+    <title>Petopia</title>
+    <link rel="icon" type="image/png" href="/images/Petopia-192.png" sizes="192x192">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-zinc-950 text-white">
@@ -17,7 +18,7 @@
                 </div>
             </div>
 
-            <h1 class="text-7xl font-bold tracking-tighter">Pet Care System</h1>
+            <h1 class="text-7xl font-bold tracking-tighter">Petopia</h1>
             
             <p class="mt-6 text-2xl text-emerald-400 font-medium">
                 Информационная система для ухода за домашними питомцами

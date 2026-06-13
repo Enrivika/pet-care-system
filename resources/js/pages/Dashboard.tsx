@@ -91,24 +91,6 @@ const Dashboard = () => {
     return colors[category] || '#6F6F6F';
   };
 
-  const getCategoryEmoji = (category: string) => {
-    const emojis: Record<string, string> = {
-      'Кормление': '🍽️',
-      'Поение': '💧',
-      'Прогулка': '🚶',
-      'Укол': '💉',
-      'Лекарство': '💊',
-      'Ветеринар': '🩺',
-      'Игры': '🎾',
-      'Гигиена': '🧼',
-      'Обучение': '🎓',
-      'Груминг': '✂️',
-      'Уборка': '🧹',
-      'Другое': '📋',
-    };
-    return emojis[category] || '📋';
-  };
-
   const formatTaskTime = (task: any) => {
     const startAt = task.start_at;
     const isAllDay = !!task.is_all_day;

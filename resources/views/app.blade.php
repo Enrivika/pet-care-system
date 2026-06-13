@@ -7,6 +7,9 @@
 
         <title>{{ config('app.name', 'Petopia') }}</title>
 
+        <!-- Favicon -->
+        <link rel="icon" type="image/png" href="/images/Petopia-192.png" sizes="192x192">
+
         <!-- Fonts -->
         <!-- Шрифты -->
         <link rel="preconnect" href="https://fonts.googleapis.com">

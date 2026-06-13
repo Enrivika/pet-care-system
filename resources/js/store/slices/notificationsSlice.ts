@@ -9,6 +9,7 @@ interface Notification {
   read_at: string | null;
   event_id?: number;
   pet_id?: number;
+  category?: string;
 }
 
 interface NotificationsState {
@@ -56,6 +57,15 @@ export const clearAllNotifications = createAsyncThunk('notifications/clearAll', 
   return true;
 });
 
+// Удалить одно уведомление
+export const deleteNotification = createAsyncThunk(
+  'notifications/deleteNotification',
+  async (id: number) => {
+    await api.delete(`/notifications/${id}`);
+    return id;
+  }
+);
+
 const notificationsSlice = createSlice({
   name: 'notifications',
   initialState,
@@ -87,6 +97,14 @@ const notificationsSlice = createSlice({
       .addCase(clearAllNotifications.fulfilled, (state) => {
         state.notifications = [];
         state.unreadCount = 0;
+      })
+      .addCase(deleteNotification.fulfilled, (state, action) => {
+        const id = action.payload;
+        const deleted = state.notifications.find((n: Notification) => n.id === id);
+        state.notifications = state.notifications.filter((n: Notification) => n.id !== id);
+        if (deleted && !deleted.read_at) {
+          state.unreadCount = Math.max(0, state.unreadCount - 1);
+        }
       });
   },
 });
