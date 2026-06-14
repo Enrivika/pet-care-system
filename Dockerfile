@@ -20,8 +20,9 @@ RUN apk add --no-cache \
     libzip-dev libpng-dev libjpeg-turbo-dev freetype-dev oniguruma-dev
 
 # Устанавливаем PHP расширения
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
+RUN apk add --no-cache postgresql-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo_mysql pdo_pgsql mbstring exif pcntl bcmath gd zip
 
 # Устанавливаем Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
