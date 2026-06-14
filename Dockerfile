@@ -1,5 +1,5 @@
 # ==========================================
-# Stage 1: Build frontend (React + Vite)
+# Stage 1: Сборка фронтенда (React + Vite)
 # ==========================================
 FROM node:20-alpine AS frontend
 
@@ -10,24 +10,16 @@ COPY . .
 RUN npm run build
 
 # ==========================================
-# Stage 2: PHP + Nginx + Supervisor
+# Stage 2: PHP + Laravel
 # ==========================================
 FROM php:8.2-cli-alpine
 
-# Устанавливаем системные зависимости (исправленная версия)
-RUN apk add --no-cache \    
-    git \
-    curl \
-    zip \
-    unzip \
-    libzip-dev \
-    libpng-dev \
-    libjpeg-turbo-dev \
-    freetype-dev \
-    oniguruma-dev \
-    libxml2-dev
+# Устанавливаем системные зависимости
+RUN apk add --no-cache \
+    git curl zip unzip \
+    libzip-dev libpng-dev libjpeg-turbo-dev freetype-dev oniguruma-dev
 
-# Настраиваем и устанавливаем PHP расширения
+# Устанавливаем PHP расширения
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
@@ -45,13 +37,10 @@ COPY --from=frontend /app/public/build ./public/build
 # Устанавливаем PHP зависимости
 RUN composer install --no-dev --optimize-autoloader
 
-# Права
+# Права на папки
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Копируем конфиги
-COPY docker/nginx.conf /etc/nginx/nginx.conf
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+EXPOSE 8000
 
-EXPOSE 80
-
+# Запуск Laravel
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
