@@ -73,21 +73,35 @@ class EmailVerificationService
                 : Hash::make($registrationData['password']);
         }
 
-        EmailVerification::create($data);
+        $verification = EmailVerification::create($data);
 
         $subject = $type === 'registration' 
             ? 'Подтверждение регистрации в Petopia' 
             : 'Подтверждение смены email в Petopia';
 
-        Mail::raw(
-            "Здравствуйте!\n\n" .
-            "Ваш код подтверждения: {$code}\n\n" .
-            "Код действителен в течение " . self::EXPIRATION_MINUTES . " минут.\n\n" .
-            "Если вы не запрашивали это действие, просто проигнорируйте письмо.",
-            function ($message) use ($email, $subject) {
-                $message->to($email)->subject($subject);
-            }
-        );
+        try {
+            Mail::raw(
+                "Здравствуйте!\n\n" .
+                "Ваш код подтверждения: {$code}\n\n" .
+                "Код действителен в течение " . self::EXPIRATION_MINUTES . " минут.\n\n" .
+                "Если вы не запрашивали это действие, просто проигнорируйте письмо.",
+                function ($message) use ($email, $subject) {
+                    $message->to($email)->subject($subject);
+                }
+            );
+        } catch (\Exception $mailException) {
+            // Важно: удаляем запись, чтобы неудачная отправка почты
+            // не расходовала лимит попыток (rate limit).
+            // На Render часто бывают проблемы с Gmail SMTP (блокировка, auth и т.д.).
+            $verification->delete();
+
+            throw new \Exception(
+                'Не удалось отправить код подтверждения на email. ' .
+                'Возможно, проблема с настройками почты (Gmail часто блокирует отправку из облака). ' .
+                'Попробуйте позже или используйте другой email. ' .
+                'Детали: ' . $mailException->getMessage()
+            );
+        }
     }
 
     /**

@@ -271,7 +271,14 @@ public function register(Request $request)
 
             return response()->json(['message' => 'Код подтверждения отправлен на email']);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 429);
+            $message = $e->getMessage();
+
+            // Только настоящие rate limit'ы возвращаем 429.
+            // Ошибки отправки почты (особенно на Render с Gmail) — 422,
+            // чтобы фронтенд и пользователь видели реальную проблему, а не "429 Too Many".
+            $status = str_contains($message, 'Слишком много попыток') ? 429 : 422;
+
+            return response()->json(['message' => $message], $status);
         }
     }
 
