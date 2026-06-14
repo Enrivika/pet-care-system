@@ -1,12 +1,7 @@
 // Регистрация Service Worker как ESM модуля.
-// Мы сами контролируем путь и тип регистрации, чтобы избежать ошибок MIME и bare imports.
+// Мы сами контролируем путь и тип регистрации (type: module), потому что SW использует ESM import.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    // Ключевой момент:
-    // - Когда приложение открыто через Vite dev server (порт 5173) — используем специальный dev SW от плагина.
-    //   Он виртуальный и правильно обрабатывает все импорты.
-    // - Когда открыто через Laravel (порт 8000) — используем обработанный SW из билда.
-    //   Для этого достаточно один раз выполнить `npm run build` (файл public/build/sw.js появится).
     const isViteDev = import.meta.env.DEV && window.location.port === '5173';
     const swUrl = isViteDev 
       ? '/dev-sw.js?dev-sw' 
@@ -24,16 +19,33 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Виртуальный модуль от плагина — используется только для обработки обновлений приложения
-// (кнопка "обновить" при выходе новой версии и т.д.). Сама регистрация у нас ручная выше.
+// Виртуальный модуль от vite-plugin-pwa.
+// Используется для обнаружения обновлений приложения (новый билд).
+// registerType: 'prompt' в vite.config — значит авто-перезагрузок не будет.
+// Мы сами решаем, когда перезагружать (через updateSW()).
 import { registerSW } from 'virtual:pwa-register';
 
-registerSW({
-  immediate: true,
+// ВАЖНО: immediate: false (по умолчанию), чтобы не было агрессивных проверок обновлений
+// при каждом монтировании страницы. На Render каждый деплой = новый хэш в SW,
+// 'autoUpdate' + immediate раньше вызывали постоянные F5.
+const updateSW = registerSW({
+  immediate: false,
   onNeedRefresh() {
-    console.log('[PWA] New content available. Refresh the page to update.');
+    // Здесь можно показать красивый тост с кнопкой "Обновить приложение".
+    // Для простоты — лог + опциональный confirm.
+    console.log('[PWA] New content available. New version of the app is ready.');
+
+    // Раскомментируй, если хочешь показывать confirm при наличии обновления:
+    // if (confirm('Доступна новая версия Petopia. Обновить страницу?')) {
+    //   updateSW(true); // true = reload after activating new SW
+    // }
   },
   onOfflineReady() {
     console.log('[PWA] Application is ready to work offline.');
   },
 });
+
+// Если хочешь программно обновить приложение (например, из кнопки в профиле):
+// window.updateSW = updateSW; 
+// потом где-то: window.updateSW(true); 
+

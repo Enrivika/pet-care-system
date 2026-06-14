@@ -16,7 +16,7 @@ export default defineConfig({
             strategies: 'injectManifest',
             srcDir: 'public',
             filename: 'sw.js',
-            registerType: 'autoUpdate',
+            registerType: 'prompt',  // 'prompt' чтобы не было авто-перезагрузок страницы. Пользователь сам решает, когда обновлять. С 'autoUpdate' + новый билд на Render — постоянные рефреши.
             injectRegister: false, // мы регистрируем сами с type: 'module' (потому что SW использует ESM import)
             includeAssets: ['favicon.ico', 'images/*.png'],
             manifest: {
