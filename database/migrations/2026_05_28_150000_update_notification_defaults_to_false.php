@@ -1,15 +1,20 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
-        // Меняем дефолтные значения на false (для новых пользователей)
-        DB::statement('ALTER TABLE `users` MODIFY `notify_email` BOOLEAN NOT NULL DEFAULT FALSE');
-        DB::statement('ALTER TABLE `users` MODIFY `notify_push` BOOLEAN NOT NULL DEFAULT FALSE');
+        // Меняем дефолтные значения на false (кросс-СУБД способ)
+        // Требует doctrine/dbal для ->change()
+        Schema::table('users', function (Blueprint $table) {
+            $table->boolean('notify_email')->default(false)->change();
+            $table->boolean('notify_push')->default(false)->change();
+        });
 
         // Принудительно отключаем уведомления у всех существующих пользователей
         DB::table('users')->update([
@@ -21,8 +26,10 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Возврат к старым дефолтам (если понадобится откатить миграцию)
-        DB::statement('ALTER TABLE `users` MODIFY `notify_email` BOOLEAN NOT NULL DEFAULT TRUE');
-        DB::statement('ALTER TABLE `users` MODIFY `notify_push` BOOLEAN NOT NULL DEFAULT TRUE');
+        // Возврат к старым дефолтам
+        Schema::table('users', function (Blueprint $table) {
+            $table->boolean('notify_email')->default(true)->change();
+            $table->boolean('notify_push')->default(true)->change();
+        });
     }
 };
