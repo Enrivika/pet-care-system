@@ -12,7 +12,7 @@ RUN npm run build
 # ==========================================
 # Stage 2: PHP + Nginx + Supervisor
 # ==========================================
-FROM php:8.2-fpm-alpine
+FROM php:8.2-cli-alpine
 
 # Устанавливаем системные зависимости (исправленная версия)
 RUN apk add --no-cache \
@@ -56,4 +56,4 @@ COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 EXPOSE 80
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
