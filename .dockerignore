@@ -33,7 +33,10 @@ phpunit.xml
 *.log
 npm-debug.log*
 
-# Docker itself
+# Docker build files themselves (not needed inside the image)
 Dockerfile
-docker/
 .dockerignore
+
+# Note: we do NOT ignore the docker/ directory because Dockerfile explicitly does
+# COPY docker/entrypoint.sh ...  (required for the container to start)
+# If you add more files from docker/ later (nginx, supervisord), they will be available.

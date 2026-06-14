@@ -2,7 +2,7 @@
 # Deploy everything as ONE Web Service + Postgres database.
 #
 # How to use:
-# 1. Push this file + your code to GitHub.
+# 1. Push this file + your code to GitHub (important: the fixes below).
 # 2. In Render dashboard: New > Blueprint > connect your repo.
 #    It will create the DB + Web Service automatically.
 # 3. After first deploy, go to the Web Service → Environment and add any missing secrets
@@ -50,18 +50,16 @@ services:
       #   VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY (for web push)
       # Database connection will come from the linked postgres service below.
 
-  - type: pserv
-    name: petopia-db
+# Databases (Render will provision a managed Postgres)
+databases:
+  - name: petopia-db
     plan: free
     databaseName: petopia
     user: petopia
-    # Render will automatically provide DATABASE_URL, PGHOST etc. to linked services.
-    # In the web service you can also add:
-    #   - key: DATABASE_URL
-    #     fromDatabase:
-    #       name: petopia-db
-    #       property: connectionString
-    # But the Blueprint system usually wires it when you reference in UI too.
+    # After creation Render exposes these to linked services:
+    #   DATABASE_URL, PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD
+    # In the web service below we set DB_CONNECTION=pgsql and rely on DATABASE_URL
+    # (Laravel supports DATABASE_URL for pgsql automatically).
 
 # Optional: you can define env groups for shared secrets later.
 # envVarGroups:
