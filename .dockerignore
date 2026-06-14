@@ -1,0 +1,39 @@
+# Dependencies (reinstalled in Docker)
+node_modules
+vendor
+
+# Local env and secrets (never ship real secrets in image)
+.env
+.env.local
+.env.*.local
+.env.backup
+
+# Build artifacts that are re-generated
+public/build
+public/hot
+storage/pail
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+
+# Git and IDE
+.git
+.gitignore
+.gitattributes
+.idea
+.vscode
+*.md
+design/
+tests/
+phpunit.xml
+
+# OS / misc
+.DS_Store
+*.log
+npm-debug.log*
+
+# Docker itself
+Dockerfile
+docker/
+.dockerignore

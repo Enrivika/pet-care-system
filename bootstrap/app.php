@@ -22,6 +22,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // CORS (чтобы фронтенд мог обращаться к API)
         $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
 
+        // Trust proxies — критично для Render (и любого облака за load balancer)
+        // Чтобы корректно определялся https, реальный IP клиента и APP_URL.
+        $middleware->trustProxies(at: '*');
+
         // Алиасы middleware (если нужно)
         $middleware->alias([
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,

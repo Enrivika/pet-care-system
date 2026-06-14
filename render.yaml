@@ -1,0 +1,71 @@
+# Render Blueprint for Petopia (Laravel + React SPA)
+# Deploy everything as ONE Web Service + Postgres database.
+#
+# How to use:
+# 1. Push this file + your code to GitHub.
+# 2. In Render dashboard: New > Blueprint > connect your repo.
+#    It will create the DB + Web Service automatically.
+# 3. After first deploy, go to the Web Service → Environment and add any missing secrets
+#    (MAIL_PASSWORD, APP_KEY if you want to rotate, VAPID keys, etc.).
+# 4. Important: After provisioning, attach a Persistent Disk to the web service
+#    (Disks tab) with mount path: /var/www/html/persistent   (1 GB is enough to start).
+#    This keeps user-uploaded pet photos and avatars.
+#
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: petopia
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter   # Change to free or paid as needed
+    autoDeploy: true
+    healthCheckPath: /up
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_TIMEZONE
+        value: Europe/Moscow
+      # APP_URL will be set automatically by Render after deploy (https://petopia.onrender.com or your custom domain)
+      # You can hardcode or leave it — entrypoint + Laravel use env.
+      - key: LOG_LEVEL
+        value: error
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: QUEUE_CONNECTION
+        value: sync
+      - key: SESSION_DRIVER
+        value: file
+      - key: CACHE_STORE
+        value: file
+      - key: FILESYSTEM_DISK
+        value: local
+      # VITE_API_URL is baked at Docker build time (see Dockerfile + axios.ts).
+      # For same origin single service we use relative /api — no need to set here.
+      # Secrets you MUST set manually in dashboard (or via envGroup) after first create:
+      #   APP_KEY (generate with: php artisan key:generate --show)
+      #   MAIL_PASSWORD (Gmail app password)
+      #   VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY (for web push)
+      # Database connection will come from the linked postgres service below.
+
+  - type: pserv
+    name: petopia-db
+    plan: free
+    databaseName: petopia
+    user: petopia
+    # Render will automatically provide DATABASE_URL, PGHOST etc. to linked services.
+    # In the web service you can also add:
+    #   - key: DATABASE_URL
+    #     fromDatabase:
+    #       name: petopia-db
+    #       property: connectionString
+    # But the Blueprint system usually wires it when you reference in UI too.
+
+# Optional: you can define env groups for shared secrets later.
+# envVarGroups:
+#   - name: petopia-secrets
+#     envVars:
+#       - key: MAIL_PASSWORD
+#         sync: false   # mark as secret
