@@ -15,9 +15,7 @@ RUN npm run build
 FROM php:8.2-cli-alpine
 
 # Устанавливаем системные зависимости (исправленная версия)
-RUN apk add --no-cache \
-    nginx \
-    supervisor \
+RUN apk add --no-cache \    
     git \
     curl \
     zip \
