@@ -8,6 +8,7 @@ interface EmailVerificationModalProps {
   email: string;
   type: 'registration' | 'email_change';
   onSuccess?: (data?: any) => void;
+  debugCode?: string | null;   // для отладки на Render (MAIL_MAILER=log или EMAIL_VERIFICATION_DEBUG=true)
 }
 
 const EmailVerificationModal = ({
@@ -16,6 +17,7 @@ const EmailVerificationModal = ({
   email,
   type,
   onSuccess,
+  debugCode,
 }: EmailVerificationModalProps) => {
   const [code, setCode] = useState<string[]>(Array(6).fill(''));
   const [loading, setLoading] = useState(false);
@@ -25,6 +27,18 @@ const EmailVerificationModal = ({
 
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
   const timerRef = useRef<number | null>(null);
+
+  // Авто-заполнение кода в режиме отладки (Render без реальной почты)
+  useEffect(() => {
+    if (isOpen && debugCode && /^\d{6}$/.test(debugCode)) {
+      const digits = debugCode.split('');
+      setCode(digits);
+      // Показать подсказку
+      toast.info('Режим отладки: код автоматически подставлен (смотрите логи Render при необходимости)', { duration: 6000 });
+      // Сфокусироваться на последнем поле
+      setTimeout(() => inputsRef.current[5]?.focus(), 100);
+    }
+  }, [isOpen, debugCode]);
 
   // Reset state when modal opens/closes + start timer
   useEffect(() => {
@@ -158,14 +172,24 @@ const EmailVerificationModal = ({
     setResendLoading(true);
 
     try {
-      await api.post('/email-verification/send', {
+      const res = await api.post('/email-verification/send', {
         email,
         type,
       });
 
-      toast.success('Новый код отправлен');
+      const newDebugCode = res.data?.debug_code;
+      if (newDebugCode && /^\d{6}$/.test(newDebugCode)) {
+        const digits = newDebugCode.split('');
+        setCode(digits);
+        toast.info('Режим отладки: новый код автоматически подставлен', { duration: 4000 });
+      } else {
+        toast.success('Новый код отправлен');
+      }
+
       startResendTimer();
-      setCode(Array(6).fill(''));
+      if (!newDebugCode) {
+        setCode(Array(6).fill(''));
+      }
       inputsRef.current[0]?.focus();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Не удалось отправить код');

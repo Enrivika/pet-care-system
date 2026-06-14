@@ -262,14 +262,23 @@ public function register(Request $request)
                 ];
             }
 
-            $service->sendCode(
+            $debugCode = $service->sendCode(
                 $validated['email'],
                 $userId,
                 $validated['type'],
                 $registrationData
             );
 
-            return response()->json(['message' => 'Код подтверждения отправлен на email']);
+            $response = ['message' => 'Код подтверждения отправлен на email'];
+
+            // В debug-режиме (MAIL_MAILER=log или EMAIL_VERIFICATION_DEBUG=true)
+            // возвращаем код во фронтенд, чтобы можно было пройти верификацию на Render
+            // без реальной почты.
+            if ($debugCode) {
+                $response['debug_code'] = $debugCode;
+            }
+
+            return response()->json($response);
         } catch (\Exception $e) {
             $message = $e->getMessage();
 

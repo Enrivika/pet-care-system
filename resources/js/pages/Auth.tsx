@@ -36,6 +36,7 @@ const Auth = () => {
     email: string;
     password: string;
   } | null>(null);
+  const [debugVerificationCode, setDebugVerificationCode] = useState<string | null>(null);
 
   useEffect(() => {
     const savedEmail = localStorage.getItem('rememberedEmail');
@@ -83,7 +84,7 @@ const Auth = () => {
 
     try {
       // Step 1: Send verification code instead of creating the account immediately
-      await api.post('/email-verification/send', {
+      const res = await api.post('/email-verification/send', {
         email: regEmail,
         type: 'registration',
         name: regName,
@@ -91,12 +92,15 @@ const Auth = () => {
         password_confirmation: regPasswordConfirm,
       });
 
+      const debugCode = res.data?.debug_code || null;
+
       // Step 2: Store pending data and open verification modal
       setPendingRegistration({
         name: regName,
         email: regEmail,
         password: regPassword,
       });
+      setDebugVerificationCode(debugCode);
       setShowVerificationModal(true);
 
     } catch (error: any) {
@@ -416,10 +420,12 @@ const Auth = () => {
         onClose={() => {
           setShowVerificationModal(false);
           setPendingRegistration(null);
+          setDebugVerificationCode(null);
         }}
         email={pendingRegistration?.email || ''}
         type="registration"
         onSuccess={handleRegistrationVerificationSuccess}
+        debugCode={debugVerificationCode}
       />
     </div>
   );

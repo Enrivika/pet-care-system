@@ -19,7 +19,7 @@ class EmailVerificationService
      * Generate and send a verification code.
      * For registration, pass $registrationData = ['name' => ..., 'password' => ...]
      */
-    public function sendCode(string $email, ?int $userId = null, string $type = 'registration', array $registrationData = []): void
+    public function sendCode(string $email, ?int $userId = null, string $type = 'registration', array $registrationData = []): ?string
     {
         // Rate limiting
         $recentCount = EmailVerification::where('email', $email)
@@ -75,33 +75,49 @@ class EmailVerificationService
 
         $verification = EmailVerification::create($data);
 
+        $isDebug = env('EMAIL_VERIFICATION_DEBUG', false) || config('mail.default') === 'log';
+
+        if ($isDebug) {
+            \Illuminate\Support\Facades\Log::info("=== [DEBUG EMAIL VERIFICATION] Код для {$email} (тип: {$type}): {$code} ===");
+        }
+
         $subject = $type === 'registration' 
             ? 'Подтверждение регистрации в Petopia' 
             : 'Подтверждение смены email в Petopia';
 
-        try {
-            Mail::raw(
-                "Здравствуйте!\n\n" .
-                "Ваш код подтверждения: {$code}\n\n" .
-                "Код действителен в течение " . self::EXPIRATION_MINUTES . " минут.\n\n" .
-                "Если вы не запрашивали это действие, просто проигнорируйте письмо.",
-                function ($message) use ($email, $subject) {
-                    $message->to($email)->subject($subject);
-                }
-            );
-        } catch (\Exception $mailException) {
-            // Важно: удаляем запись, чтобы неудачная отправка почты
-            // не расходовала лимит попыток (rate limit).
-            // На Render часто бывают проблемы с Gmail SMTP (блокировка, auth и т.д.).
-            $verification->delete();
+        if (!$isDebug) {
+            try {
+                Mail::raw(
+                    "Здравствуйте!\n\n" .
+                    "Ваш код подтверждения: {$code}\n\n" .
+                    "Код действителен в течение " . self::EXPIRATION_MINUTES . " минут.\n\n" .
+                    "Если вы не запрашивали это действие, просто проигнорируйте письмо.",
+                    function ($message) use ($email, $subject) {
+                        $message->to($email)
+                            ->subject($subject)
+                            ->from(
+                                config('mail.from.address'),
+                                config('mail.from.name')
+                            );
+                    }
+                );
+            } catch (\Exception $mailException) {
+                // Важно: удаляем запись, чтобы неудачная отправка почты
+                // не расходовала лимит попыток (rate limit).
+                // На Render часто бывают проблемы с Gmail SMTP (блокировка, auth и т.д.).
+                $verification->delete();
 
-            throw new \Exception(
-                'Не удалось отправить код подтверждения на email. ' .
-                'Возможно, проблема с настройками почты (Gmail часто блокирует отправку из облака). ' .
-                'Попробуйте позже или используйте другой email. ' .
-                'Детали: ' . $mailException->getMessage()
-            );
+                throw new \Exception(
+                    'Не удалось отправить код подтверждения на email. ' .
+                    'Возможно, проблема с настройками почты (Gmail часто блокирует отправку из облака). ' .
+                    'Попробуйте позже или используйте другой email. ' .
+                    'Детали: ' . $mailException->getMessage()
+                );
+            }
         }
+
+        // Возвращаем plain code только в debug-режиме (для фронтенда на Render)
+        return $isDebug ? $code : null;
     }
 
     /**
