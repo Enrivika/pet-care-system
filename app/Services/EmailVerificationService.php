@@ -104,14 +104,13 @@ class EmailVerificationService
             } catch (\Exception $mailException) {
                 // Важно: удаляем запись, чтобы неудачная отправка почты
                 // не расходовала лимит попыток (rate limit).
-                // На Render часто бывают проблемы с Gmail SMTP (блокировка, auth и т.д.).
+                // Gmail плохо работает с Render — мы перешли на Resend.
                 $verification->delete();
 
                 throw new \Exception(
                     'Не удалось отправить код подтверждения на email. ' .
-                    'Возможно, проблема с настройками почты (Gmail часто блокирует отправку из облака). ' .
-                    'Попробуйте позже или используйте другой email. ' .
-                    'Детали: ' . $mailException->getMessage()
+                    'Проверьте настройки почтового провайдера (Resend / Gmail часто блокирует отправку из облака). ' .
+                    'Попробуйте позже. Детали: ' . $mailException->getMessage()
                 );
             }
         }
