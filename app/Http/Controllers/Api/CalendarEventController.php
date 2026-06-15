@@ -81,7 +81,8 @@ class CalendarEventController extends Controller
 
         // КРИТИЧЕСКИ ВАЖНО: если пользователь выбрал повтор — явно включаем флаг is_recurring.
         // Раньше флаг никогда не выставлялся из фронтенда → все проверки в complete() и команде проваливались.
-        $isRecurring = !empty($validated['recurrence_rule']) && $validated['recurrence_rule'] !== 'none';
+        $recurrenceRule = $validated['recurrence_rule'] ?? null;
+        $isRecurring = !empty($recurrenceRule) && $recurrenceRule !== 'none';
 
         $event = $pet->events()->create([
             ...$validated,
@@ -179,9 +180,7 @@ class CalendarEventController extends Controller
         // КРИТИЧЕСКИ ВАЖНО: при редактировании тоже явно вычисляем is_recurring,
         // иначе при добавлении повтора через редактирование флаг остаётся false
         // и createNextOccurrence() не создаёт следующую задачу.
-        $recurrenceRule = array_key_exists('recurrence_rule', $validated)
-            ? $validated['recurrence_rule']
-            : $event->recurrence_rule;
+        $recurrenceRule = $validated['recurrence_rule'] ?? $event->recurrence_rule;
 
         $isRecurring = !empty($recurrenceRule) && $recurrenceRule !== 'none';
 

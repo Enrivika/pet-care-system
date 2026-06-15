@@ -1,0 +1,48 @@
+// public/sw-source.js
+// SOURCE TEMPLATE for VitePWA injectManifest strategy.
+// This file MUST stay clean with the placeholder self.__WB_MANIFEST.
+// The build will process it and copy the result to public/sw.js for root scope.
+
+import { precacheAndRoute } from 'workbox-precaching';
+
+precacheAndRoute(self.__WB_MANIFEST);
+
+// Custom push notification logic for Petopia Web Push (preserved in final SW)
+self.addEventListener('push', function(event) {
+  const payload = event.data ? event.data.json() : {};
+  
+  const title = payload.title || (payload.notification && payload.notification.title) || 'Petopia';
+  const body = payload.body || (payload.notification && payload.notification.body) || 'У вас новое уведомление';
+  const icon = payload.icon || (payload.notification && payload.notification.icon) || '/images/Petopia.png';
+  
+  let targetUrl = '/dashboard';
+  if (payload.data && payload.data.url) {
+    targetUrl = payload.data.url;
+  } else if (payload.notification && payload.notification.data && payload.notification.data.url) {
+    targetUrl = payload.notification.data.url;
+  }
+ 
+  const options = {
+    body: body,
+    icon: icon,
+    badge: '/images/Petopia.png',
+    vibrate: [100, 50, 100],
+    data: {
+      dateOfArrival: Date.now(),
+      primaryKey: 1,
+      url: targetUrl
+    }
+  };
+ 
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  const urlToOpen = (event.notification.data && event.notification.data.url) || '/dashboard';
+  event.waitUntil(
+    clients.openWindow(urlToOpen)
+  );
+});

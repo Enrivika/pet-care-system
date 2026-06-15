@@ -51,6 +51,7 @@ COPY --from=frontend /app/public/build ./public/build
 
 # Копируем обработанный Service Worker в корень public/sw.js
 # для правильного scope "/" (критично для Web Push на всём сайте при доступе через бэкенд).
+# Используем sw-source.js как чистый шаблон.
 RUN if [ -f /var/www/html/public/build/sw.js ]; then \
       cp /var/www/html/public/build/sw.js /var/www/html/public/sw.js; \
     elif [ -f /var/www/html/public/build/sw.mjs ]; then \

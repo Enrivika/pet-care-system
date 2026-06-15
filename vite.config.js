@@ -15,7 +15,7 @@ export default defineConfig({
         VitePWA({
             strategies: 'injectManifest',
             srcDir: 'public',
-            filename: 'sw.js',
+            filename: 'sw-source.js',
             registerType: 'prompt',
             injectRegister: false,
             includeAssets: ['favicon.ico', 'images/*.png'],
