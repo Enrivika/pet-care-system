@@ -47,7 +47,7 @@ php artisan route:cache || true
 php artisan view:cache || true
 
 echo "==> Running migrations (force in production)..."
-php artisan migrate --force
+php artisan migrate --force --verbose
 
 # === Upload directories handling (works on free tier without paid Persistent Disk) ===
 #
