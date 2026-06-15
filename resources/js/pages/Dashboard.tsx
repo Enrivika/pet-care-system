@@ -220,8 +220,8 @@ const Dashboard = () => {
      try {
       const formData = new FormData();
       formData.append('name', updatedPet.name);
-      if (updatedPet.age) formData.append('age', updatedPet.age);
-      if (updatedPet.photo) formData.append('photo', updatedPet.photo);
+      // Always send age (even if 0 or null) so backend can clear it. Use empty string for null.
+      formData.append('age', updatedPet.age != null ? String(updatedPet.age) : '');
  
       await dispatch(updatePet({ 
         petId: updatedPet.id, 

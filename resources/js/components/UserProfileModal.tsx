@@ -148,9 +148,8 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
         await unsubscribeFromPush();
       }
 
+      // Отправляем только настройку push, чтобы не трогать name/email случайно
       await api.post('/user/profile', {
-        name,
-        email,
         notify_push: newValue,
       });
 

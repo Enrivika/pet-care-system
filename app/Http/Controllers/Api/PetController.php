@@ -29,8 +29,11 @@ class PetController extends Controller
         ]);
 
         $birthDate = null;
-        if ($request->filled('age')) {
-            $birthDate = Carbon::now()->subYears($request->age)->format('Y-m-d');
+        if ($request->has('age')) {
+            $age = $request->input('age');
+            if ($age !== '' && $age !== null && $age != 0) {
+                $birthDate = Carbon::now()->subYears((int)$age)->format('Y-m-d');
+            }
         }
         
         $photoUrl = null;
@@ -84,8 +87,14 @@ class PetController extends Controller
         }
 
         // Возраст → birth_date
-        if ($request->filled('age')) {
-            $data['birth_date'] = Carbon::now()->subYears($request->age)->format('Y-m-d');
+        // Поддерживаем очистку возраста (пустая строка / 0 / null)
+        if ($request->has('age')) {
+            $age = $request->input('age');
+            if ($age === '' || $age === null || $age == 0) {
+                $data['birth_date'] = null;
+            } else {
+                $data['birth_date'] = Carbon::now()->subYears((int)$age)->format('Y-m-d');
+            }
         }
 
         // Фото

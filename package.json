@@ -2,7 +2,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vite build",
+        "build": "node -e \"const fs=require('fs'); const content=fs.readFileSync('public/sw.js','utf8'); if(!content.includes('self.__WB_MANIFEST')){ console.error('ERROR: public/sw.js is not the clean template (missing placeholder). Run: git checkout -- public/sw.js'); process.exit(1); }\" && vite build && node -e \"const fs=require('fs'); const src='public/build/sw.mjs'; const dest='public/sw.js'; if(fs.existsSync(src)){ fs.copyFileSync(src,dest); console.log('Processed SW copied to public/sw.js for root scope on 8000'); } else if(fs.existsSync('public/build/sw.js')){ fs.copyFileSync('public/build/sw.js',dest); console.log('Processed SW copied'); }\"",
         "dev": "vite"
     },
     "devDependencies": {

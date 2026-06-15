@@ -75,7 +75,8 @@ const Pets = () => {
     try {
       const formData = new FormData();
       formData.append('name', petName);
-      if (petAge) formData.append('age', petAge);
+      // send even if 0
+      formData.append('age', petAge || '');
       if (petPhoto) formData.append('photo', petPhoto);
 
       await dispatch(createPet(formData) as any).unwrap();
@@ -103,8 +104,8 @@ const Pets = () => {
     try {
       const formData = new FormData();
       formData.append('name', updatedPet.name);
-      if (updatedPet.age) formData.append('age', updatedPet.age);
-      if (updatedPet.photo) formData.append('photo', updatedPet.photo);
+      // Always send age (even if 0 or null) so backend can clear it. Use empty string for null.
+      formData.append('age', updatedPet.age != null ? String(updatedPet.age) : '');
 
       // Получаем свежие данные из ответа бэкенда
       const result = await dispatch(updatePet({ 

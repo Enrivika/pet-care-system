@@ -49,6 +49,14 @@ COPY . .
 # Копируем собранный фронтенд (assets + PWA manifest/sw)
 COPY --from=frontend /app/public/build ./public/build
 
+# Копируем обработанный Service Worker в корень public/sw.js
+# для правильного scope "/" (критично для Web Push на всём сайте при доступе через бэкенд).
+RUN if [ -f /var/www/html/public/build/sw.js ]; then \
+      cp /var/www/html/public/build/sw.js /var/www/html/public/sw.js; \
+    elif [ -f /var/www/html/public/build/sw.mjs ]; then \
+      cp /var/www/html/public/build/sw.mjs /var/www/html/public/sw.js; \
+    fi
+
 # Устанавливаем PHP зависимости (production)
 RUN composer install --no-dev --optimize-autoloader
 

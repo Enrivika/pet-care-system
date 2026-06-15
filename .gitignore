@@ -21,3 +21,9 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Processed Service Worker (root scope for Push on backend-served apps).
+# Source template lives in public/sw-template.js (committed, never overwritten by build).
+# Generated processed Service Worker (has injected manifest + root scope).
+# Source template is public/sw-template.js (committed).
+
