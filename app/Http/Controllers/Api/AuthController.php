@@ -33,7 +33,8 @@ public function register(Request $request)
         'notify_push'  => false,
     ]);
 
-    // Генерация персонального API-токена Sanctum
+    // При входе/регистрации всегда создаётся новый токен (старые удаляются)
+    $user->tokens()->delete();
     $token = $user->createToken('api-token')->plainTextToken;
 
     return response()->json([
@@ -57,7 +58,8 @@ public function register(Request $request)
             ]);
         }
 
-        // Создание нового токена при каждом успешном входе
+        // При каждом входе удаляем старые токены и создаём новый
+        $user->tokens()->delete();
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([

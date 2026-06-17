@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
-import { logout, updateUser } from '../store/slices/authSlice';
+import { logoutUser, updateUser } from '../store/slices/authSlice';
 import { toast } from 'sonner';
 import api from '../api/axios';
 import ChangePasswordModal from './ChangePasswordModal';
@@ -279,10 +279,8 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     setLoading(false);
   };
 
-  const handleLogout = () => {
-    dispatch(logout());
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+  const handleLogout = async () => {
+    await dispatch(logoutUser() as any);
     window.location.href = '/auth';
   };
 

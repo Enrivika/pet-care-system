@@ -29,6 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Алиасы middleware (если нужно)
         $middleware->alias([
             'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+            'token.activity' => \App\Http\Middleware\ValidateTokenActivity::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
@@ -40,5 +41,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Авто-завершение просроченных задач + создание следующих повторений
         $schedule->command('tasks:mark-overdue')->everyMinute();
+
+        // Удаление токенов, не использовавшихся более 3 месяцев
+        $schedule->command('tokens:prune-inactive')->daily();
     })
     ->create();

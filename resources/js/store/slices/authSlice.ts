@@ -30,6 +30,19 @@ export const login = createAsyncThunk(
   }
 );
 
+export const logoutUser = createAsyncThunk(
+  'auth/logout',
+  async () => {
+    try {
+      await api.post('/logout');
+    } catch {
+      // Даже при ошибке API очищаем локальную сессию
+    }
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  }
+);
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -73,6 +86,11 @@ const authSlice = createSlice({
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+        state.token = null;
+        state.error = null;
       });
   },
 });

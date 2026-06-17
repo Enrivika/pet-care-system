@@ -21,7 +21,8 @@ Route::post('/email-verification/send', [AuthController::class, 'sendEmailVerifi
 Route::post('/email-verification/verify', [AuthController::class, 'verifyEmailCode']);
 
 // Защищённые маршруты (требуют токен Sanctum)
-Route::middleware('auth:sanctum')->group(function () {
+// token.activity проверяет срок неактивности ДО обновления last_used_at Sanctum
+Route::middleware(['token.activity', 'auth:sanctum'])->group(function () {
 
     // Выход
     Route::post('/logout', [AuthController::class, 'logout']);

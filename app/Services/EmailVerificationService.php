@@ -154,6 +154,7 @@ class EmailVerificationService
                 'notify_push'        => false,
             ]);
 
+            $user->tokens()->delete();
             $token = $user->createToken('api-token')->plainTextToken;
 
             $result['user'] = $user;
