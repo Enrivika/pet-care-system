@@ -56,10 +56,8 @@ public function register(Request $request)
             throw ValidationException::withMessages([
                 'email' => ['Неверные данные для входа.'],
             ]);
-        }
-
-        // При каждом входе удаляем старые токены и создаём новый
-        $user->tokens()->delete();
+        }      
+        
         $token = $user->createToken('api-token')->plainTextToken;
 
         return response()->json([
