@@ -41,7 +41,7 @@ const DeletePetModal = ({
           Удалить питомца?
         </h2>
 
-        {/* ЕДИНЫЙ размер текста для всей модалки (кроме заголовка и кнопок) */}
+        {/* Единый размер текста для всей модалки */}
         <div className="text-sm sm:text-base leading-relaxed tracking-[-0.02em]">
           <p className="text-gray-700 text-center">
             Вы собираетесь удалить питомца
@@ -52,8 +52,7 @@ const DeletePetModal = ({
           </p>
 
           {/* Плашка со списком */}
-          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5 mb-4 sm:mb-6">
-            {/* убрали жирное начертание */}
+          <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5 mb-4 sm:mb-6">            
             <p className="text-gray-800 mb-2">Также будут навсегда удалены:</p>
 
             <ul className="text-gray-700 space-y-1.5">

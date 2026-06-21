@@ -31,10 +31,6 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
 
   const isCompleted = task?.is_completed;
 
-  // MEDICAL_CATEGORIES импортирован из utils/categories (единственный источник)
-
-  // Получаем сегодняшнюю дату в UTC (YYYY-MM-DD)
-  // Используем UTC, чтобы ограничение дат при редактировании истории работало последовательно с остальной логикой
   const getTodayUTCDateString = (): string => {
     const now = new Date();
     return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(
@@ -42,7 +38,6 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
     ).padStart(2, '0')}`;
   };
 
-  // Для ограничения времени при редактировании выполненных задач на сегодняшнюю дату
   const getTodayLocalDateString = (): string => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -66,9 +61,6 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
       const isMed = MEDICAL_CATEGORIES.includes(task.event_type) || task.is_medical;
       setIsMedical(isMed);
 
-      // Для выполненных задач используем completed_at как источник времени (для истории),
-      // иначе start_at. Это важно, чтобы редактирование времени выполненной задачи
-      // отражалось в истории и в БД.
       const dateToUse = (task.is_completed && task.completed_at) ? task.completed_at : task.start_at;
       if (dateToUse) {
         const dateObj = new Date(dateToUse);
@@ -105,8 +97,7 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
       setRecurrence(task.recurrence_rule || 'none');
     }
   }, [task, isOpen]);
-
-  // Если время очищено (в т.ч. "На весь день"), сбрасываем напоминание (как в AddTaskModal)
+  
   useEffect(() => {
     if (isAllDay || !time) {
       setReminder('none');
@@ -311,7 +302,7 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
               />
             </div>
 
-            {/* Примечание — только для выполненных задач (как EditHealthRecordModal по смыслу) */}
+            {/* Примечание — только для выполненных задач */}
             {isCompleted && (
               <div className="mb-4 sm:mb-6">
                 <label className="block text-xs min-[380px]:text-sm sm:text-base font-medium mb-1.5 sm:mb-2 tracking-[-0.02em]">
@@ -333,7 +324,7 @@ const EditTaskModal = ({ isOpen, onClose, task }: EditTaskModalProps) => {
               </div>
             )}
 
-            {/* Дата и время — всегда в одном ряду */}
+            {/* Дата и время */}
             <div className="grid grid-cols-2 gap-3 min-[380px]:gap-4 mb-4 sm:mb-6">
               <div className="min-w-0">
                 <label className="block text-xs min-[380px]:text-sm sm:text-base font-medium mb-1.5 sm:mb-2 tracking-[-0.02em]">

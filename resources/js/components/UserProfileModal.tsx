@@ -191,9 +191,6 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
   const handleSave = async () => {
     const originalEmail = user?.email;
 
-    // If email has changed, trigger verification instead of direct save.
-    // We set loading=true immediately to prevent the user from clicking "Сохранить изменения" multiple times
-    // (spam protection while waiting for email verification).
     if (email !== originalEmail) {
       setLoading(true);
       setPendingNewEmail(email);
@@ -207,7 +204,6 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
         setShowEmailVerification(true);
       } catch (error: any) {
         toast.error(error.response?.data?.message || 'Не удалось отправить код подтверждения');
-        // Revert email in form and release the button
         setEmail(originalEmail || '');
         setLoading(false);
       }
@@ -275,7 +271,6 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
     }
     setShowEmailVerification(false);
     setPendingNewEmail(null);
-    // Release the Save button after successful verification
     setLoading(false);
   };
 
@@ -472,7 +467,7 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
                     backgroundColor: '#FFFFFF',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = '#F3F4F6'; // сероватый hover
+                    e.currentTarget.style.backgroundColor = '#F3F4F6';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.backgroundColor = '#FFFFFF';
@@ -567,12 +562,9 @@ const UserProfileModal = ({ isOpen, onClose }: UserProfileModalProps) => {
       <EmailVerificationModal
         isOpen={showEmailVerification}
         onClose={() => {
-          // Important: closing means email change was not verified
           setShowEmailVerification(false);
           setPendingNewEmail(null);
-          // Revert the email in the form to original
           setEmail(user?.email || '');
-          // Release the Save button (spam protection ends when verification modal is dismissed)
           setLoading(false);
         }}
         email={pendingNewEmail || ''}

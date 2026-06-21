@@ -11,7 +11,6 @@ const ForgotPasswordModal = ({ isOpen, onClose }: ForgotPasswordModalProps) => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // (Опционально, но полезно) — закрывать по Esc
   useEffect(() => {
     if (!isOpen) return;
 

@@ -165,7 +165,7 @@ const PetProfileModal = ({ isOpen, onClose, pet, onEditPet }: PetProfileModalPro
         )}
       </div>
 
-      {/* Карандаш — теперь СПРАВА от имени */}
+      {/* Карандаш */}
       <button 
         onClick={() => onEditPet(pet)} 
         className="text-[#1F2421] hover:text-gray-500 transition-colors p-1 flex-shrink-0"

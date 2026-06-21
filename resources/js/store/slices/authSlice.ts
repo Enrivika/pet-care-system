@@ -60,8 +60,7 @@ const authSlice = createSlice({
       // Также обновляем localStorage, чтобы данные не терялись при перезагрузке
       localStorage.setItem('user', JSON.stringify(state.user));
     },
-    // Used after successful email verification during registration
-    // to set both user and token directly from the verification response.
+    
     setAuthAfterVerification: (state, action) => {
       const { user, token } = action.payload;
       state.user = user;

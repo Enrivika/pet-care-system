@@ -74,11 +74,8 @@ export const updateTask = createAsyncThunk(
     try {
       const dataToSend = { ...data };
 
-      // Для обновления (в отличие от создания) при "Без напоминания" мы должны ЯВНО отправить null,
-      // чтобы бэкенд понял намерение очистить поле (иначе ключ отсутствует → $request->has()=false → откат к старому значению).
-      // Для create можно удалять ключ (бэкенд обработает как null).
       if (data.reminder_minutes == null || data.reminder_minutes === 'none') {
-        dataToSend.reminder_minutes = null;   // явно шлём null для update
+        dataToSend.reminder_minutes = null; 
       } else {
         dataToSend.reminder_minutes = Number(data.reminder_minutes);
       }

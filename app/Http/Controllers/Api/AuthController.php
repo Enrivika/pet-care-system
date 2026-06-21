@@ -16,15 +16,14 @@ class AuthController extends Controller
 {
 public function register(Request $request)
 {
-    // Валидация входных данных согласно требованиям
+    // Валидация входных данных
     $validated = $request->validate([
         'name' => 'required|string|max:255',
         'email' => 'required|string|email|unique:users',
         'password' => 'required|string|min:6|confirmed',
     ]);
 
-    // Создание пользователя с хешированием пароля (bcrypt)
-    // Уведомления по умолчанию ВЫКЛЮЧЕНЫ — пользователь включит их сам в профиле
+    // Создание пользователя с хешированием пароля (bcrypt)    
     $user = User::create([
         'name'         => $validated['name'],
         'email'        => $validated['email'],
@@ -32,8 +31,7 @@ public function register(Request $request)
         'notify_email' => false,
         'notify_push'  => false,
     ]);
-
-    // При входе/регистрации всегда создаётся новый токен (старые удаляются)
+    
     $user->tokens()->delete();
     $token = $user->createToken('api-token')->plainTextToken;
 
@@ -88,8 +86,7 @@ public function register(Request $request)
 
         $data = [
             'name' => $request->input('name', $user->name),
-            'email' => $request->input('email', $user->email),
-            // По умолчанию уведомления выключены
+            'email' => $request->input('email', $user->email),            
             'notify_email' => $request->boolean('notify_email', $user->notify_email ?? false),
             'notify_push'  => $request->boolean('notify_push', $user->notify_push ?? false),
         ];
@@ -115,7 +112,7 @@ public function register(Request $request)
             $file->move($usersPath, $filename);
             $data['avatar'] = '/users/' . $filename;
         } elseif ($request->boolean('remove_avatar')) {
-            // Явное удаление текущего аватара (без загрузки нового)
+            // Явное удаление текущего аватара
             if ($user->avatar && str_starts_with($user->avatar, '/users/')) {
                 $oldPath = public_path(str_replace('/users/', 'users/', $user->avatar));
                 if (file_exists($oldPath)) {
@@ -218,13 +215,7 @@ public function register(Request $request)
             'message' => 'Новый пароль отправлен на вашу почту'
         ]);
     }
-
-    /**
-     * Отправить код верификации email (для регистрации или смены email).
-     *
-     * Маршрут публичный (вне auth:sanctum), чтобы работала регистрация до создания аккаунта.
-     * Для email_change мы больше не возвращаем 401 (чтобы не сбрасывать сессию через axios interceptor).
-     */
+    
     public function sendEmailVerification(Request $request)
     {
         $validated = $request->validate([
@@ -236,13 +227,10 @@ public function register(Request $request)
 
         $userId = null;
 
-        if ($validated['type'] === 'email_change') {
-            // Получаем пользователя даже на публичном маршруте верификации (токен Sanctum в заголовке)
+        if ($validated['type'] === 'email_change') {            
             $user = $request->user() ?? auth('sanctum')->user();
 
-            if (!$user) {
-                // ВАЖНО: возвращаем 422 вместо 401, чтобы глобальный axios interceptor
-                // не счёл это "смертью сессии" и не выкинул пользователя на экран логина.
+            if (!$user) {                
                 return response()->json([
                     'message' => 'Для смены email необходимо быть авторизованным. Обновите страницу и попробуйте снова.'
                 ], 422);
@@ -270,10 +258,7 @@ public function register(Request $request)
             );
 
             $response = ['message' => 'Код подтверждения отправлен на email'];
-
-            // В debug-режиме (MAIL_MAILER=log или EMAIL_VERIFICATION_DEBUG=true)
-            // возвращаем код во фронтенд, чтобы можно было пройти верификацию на Render
-            // без реальной почты.
+            
             if ($debugCode) {
                 $response['debug_code'] = $debugCode;
             }
@@ -281,23 +266,13 @@ public function register(Request $request)
             return response()->json($response);
         } catch (\Exception $e) {
             $message = $e->getMessage();
-
-            // Только настоящие rate limit'ы возвращаем 429.
-            // Ошибки отправки почты (особенно на Render с Gmail) — 422,
-            // чтобы фронтенд и пользователь видели реальную проблему, а не "429 Too Many".
+            
             $status = str_contains($message, 'Слишком много попыток') ? 429 : 422;
 
             return response()->json(['message' => $message], $status);
         }
     }
-
-    /**
-     * Проверить код верификации.
-     *
-     * Для типа email_change специально убраны жёсткие проверки авторизации (возврат 401),
-     * чтобы изменение почты в профиле не приводило к принудительному выходу из аккаунта.
-     * (Временное упрощение по просьбе пользователя)
-     */
+    
     public function verifyEmailCode(Request $request)
     {
         $validated = $request->validate([
@@ -305,14 +280,7 @@ public function register(Request $request)
             'code'  => 'required|string|size:6',
             'type'  => 'required|in:registration,email_change',
         ]);
-
-        // Для смены email раньше была строгая проверка авторизации.
-        // По просьбе пользователя временно убираем жёсткий 401 (который вызывал принудительный релогин через интерцептор).
-        // Безопасность обеспечивается тем, что код отправляется на новый email, и запись создаётся только из профиля авторизованного пользователя.
-        if ($validated['type'] === 'email_change') {
-            // Проверка auth здесь намеренно убрана, чтобы избежать случайных 401 и редиректа на логин.
-            // Если нужно — можно вернуть позже.
-        }
+              
 
         $service = app(EmailVerificationService::class);
 

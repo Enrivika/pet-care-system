@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('pet_id')->constrained('pets')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->string('record_type');           // vaccination, medication, visit, analysis, symptom
+            $table->string('record_type');           
             $table->string('title');
             $table->text('description')->nullable();
             $table->date('record_date');

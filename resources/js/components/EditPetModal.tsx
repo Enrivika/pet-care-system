@@ -80,7 +80,6 @@ const EditPetModal = ({ isOpen, onClose, pet, onSave }: EditPetModalProps) => {
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] lg:grid-cols-[340px_1fr] gap-6 md:gap-10">
-            {/* Левая колонка — фото (как в добавлении), но показываем текущее фото питомца */}
             <div className="flex flex-col items-center md:items-stretch">
               <label className="w-full cursor-pointer md:max-w-none max-w-[240px]">
                 <div

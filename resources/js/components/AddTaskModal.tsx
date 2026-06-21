@@ -54,7 +54,7 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
       setTime('');
       setReminder('none');
       setRecurrence('none');
-      setIsAllDay(false); // ← Чекбокс "На весь день" всегда выключен
+      setIsAllDay(false); // ← Чекбокс "На весь день"
     }
   }, [isOpen, defaultPetId]);
 
@@ -69,7 +69,7 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
   const handleCategoryChange = (cat: string) => {
     setCategory(cat);
 
-    // Для медицинского журнала (используем централизованный список)
+    // Для медицинского журнала
     if (MEDICAL_CATEGORIES.includes(cat)) {
       setIsMedical(true);
     } else if (cat !== 'Другое') {
@@ -271,7 +271,7 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
               />
             </div>
 
-            {/* Дата и время — всегда в одном ряду */}
+            {/* Дата и время */}
             <div className="grid grid-cols-2 gap-3 min-[380px]:gap-4 mb-4 sm:mb-6">
               <div className="min-w-0">
                 <label className="block text-xs min-[380px]:text-sm sm:text-base font-medium mb-1.5 sm:mb-2 tracking-[-0.02em]">
@@ -330,7 +330,7 @@ const AddTaskModal = ({ isOpen, onClose, defaultPetId }: AddTaskModalProps) => {
               </div>
             </div>
 
-            {/* Напоминание и Повтор — нативные select (без кастомной стрелки), всегда в одном ряду */}
+            {/* Напоминание и Повтор */}
             {!isHistoricalTask && (
               <div className="grid grid-cols-2 gap-3 min-[380px]:gap-4 mb-5 sm:mb-8">
                 <div className="min-w-0">

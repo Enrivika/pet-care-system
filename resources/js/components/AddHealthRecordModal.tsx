@@ -152,7 +152,7 @@ const AddHealthRecordModal = ({ isOpen, onClose, onSuccess, pets }: AddHealthRec
               </select>
             </div>
 
-            {/* Категория — дизайн/адаптив из CategorySelector, но только 4 мед. категории */}
+            {/* Категория */}
             <div className="mb-4 sm:mb-6">
               <label className="block text-xs min-[380px]:text-sm sm:text-base font-medium mb-1.5 sm:mb-2 tracking-[-0.02em]">
                 Категория *
@@ -206,7 +206,7 @@ const AddHealthRecordModal = ({ isOpen, onClose, onSuccess, pets }: AddHealthRec
               />
             </div>
 
-            {/* Дата и Время — всегда в одном ряду */}
+            {/* Дата и Время */}
             <div className="grid grid-cols-2 gap-3 min-[380px]:gap-4 mb-5 sm:mb-8">
               <div className="min-w-0">
                 <label className="block text-xs min-[380px]:text-sm sm:text-base font-medium mb-1.5 sm:mb-2 tracking-[-0.02em]">

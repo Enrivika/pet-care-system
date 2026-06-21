@@ -14,7 +14,7 @@ const DeleteTaskModal = ({ isOpen, onClose, task, onSuccess }: DeleteTaskModalPr
   const dispatch = useDispatch();
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Закрытие по Esc (как в других модалках)
+  // Закрытие по Esc
   useEffect(() => {
     if (!isOpen) return;
 

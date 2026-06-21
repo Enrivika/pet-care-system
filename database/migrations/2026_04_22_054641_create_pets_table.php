@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('owner_id')->constrained('users')->cascadeOnDelete();
             $table->string('name');
-            $table->string('species');           // dog, cat, bird, etc.
+            $table->string('species');           
             $table->string('breed')->nullable();
             $table->date('birth_date')->nullable();
             $table->string('photo_url')->nullable();

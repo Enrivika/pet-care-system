@@ -1,13 +1,8 @@
-// public/sw-source.js
-// SOURCE TEMPLATE for VitePWA injectManifest strategy.
-// This file MUST stay clean with the placeholder self.__WB_MANIFEST.
-// The build will process it and copy the result to public/sw.js for root scope.
 
 import { precacheAndRoute } from 'workbox-precaching';
 
 precacheAndRoute(self.__WB_MANIFEST);
 
-// Custom push notification logic for Petopia Web Push (preserved in final SW)
 self.addEventListener('push', function(event) {
   const payload = event.data ? event.data.json() : {};
   

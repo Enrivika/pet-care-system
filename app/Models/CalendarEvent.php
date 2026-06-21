@@ -107,12 +107,11 @@ class CalendarEvent extends Model
             return null;
         }
 
-        // Защита от дубликатов (используем существующий хелпер)
+        // Защита от дубликатов
         if (self::existsForPetAndDate($this->pet_id, $this->event_type, $nextStart)) {
             return null;
         }
-
-        // replicate() копирует все fillable атрибуты — удобно и безопасно
+        
         $child = $this->replicate([
             'id', 'created_at', 'updated_at', 'completed_at', 'reminder_sent_at'
         ]);
@@ -121,11 +120,9 @@ class CalendarEvent extends Model
         $child->is_completed     = false;
         $child->completed_at     = null;
         $child->notes            = null;
-        $child->reminder_sent_at = null;
-        // is_recurring и recurrence_rule уже скопированы через replicate
+        $child->reminder_sent_at = null;        
 
-        // Важно: для all-day задач принудительно ставим end_at = следующий день 00:00,
-        // чтобы recurring children тоже имели правильную семантику (а не наследовали возможную старую 1-часовую длительность).
+        // Важно: для all-day задач принудительно ставим end_at = следующий день 00:00,        
         if ($child->is_all_day) {
             $child->normalizeAllDayEndAt();
         } else {
@@ -139,12 +136,7 @@ class CalendarEvent extends Model
 
         return $child;
     }
-
-    /**
-     * Нормализует end_at для задач "на весь день".
-     * Если is_all_day = true, end_at должен указывать на следующий календарный день ровно в 00:00:00
-     * (исключающий конец дня). Это обеспечивает корректную семантику, overdue-логику и повторения.
-     */
+    
     public function normalizeAllDayEndAt(): void
     {
         if (!$this->is_all_day || !$this->start_at) {
@@ -155,12 +147,7 @@ class CalendarEvent extends Model
             ->startOfDay()
             ->addDay();
     }
-
-    /**
-     * Возвращает длительность задачи в минутах.
-     * Если end_at не задан — возвращаем стандартные 60 минут (как в store()).
-     * Используется при редактировании, чтобы сохранить исходную длительность при смене start_at.
-     */
+   
     public function getDurationInMinutes(): int
     {
         if ($this->end_at) {

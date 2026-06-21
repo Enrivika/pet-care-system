@@ -33,10 +33,6 @@ const Dashboard = () => {
     dispatch(fetchAllTasks() as any);
   }, [dispatch]);
 
-  // Определяем, сколько питомцев показывать в зависимости от ширины экрана (всегда один ряд).
-  // 2 — только на самых узких (<~380px), 3 — от ~380px до ~640px,
-  // 4 — от ~640px и шире (максимум 4 карточки).
-  // Ограничено, чтобы бейджи помещались и не ломались.
   useEffect(() => {
     const updatePetsToShow = () => {
       if (window.innerWidth < 380) {
@@ -102,8 +98,7 @@ const Dashboard = () => {
     const diffDays = Math.floor((taskDay.getTime() - today.getTime()) / (1000 * 3600 * 24));
     const time = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
 
-    // Специальная обработка для задач "На весь день":
-    // Вместо "Сегодня, в 00:00" показываем "Сегодня, до конца дня" (как просил пользователь).
+    // Специальная обработка для задач "На весь день": надпись "..., до конца дня"
     if (isAllDay) {
       if (diffDays === 0) return `Сегодня, до конца дня`;
       if (diffDays === 1) return `Завтра, до конца дня`;
@@ -116,7 +111,6 @@ const Dashboard = () => {
   };
 
   // === ПИТОМЦЫ С ПРИОРИТЕТОМ (сначала те, у кого есть задачи) ===
-  // Всегда показываем в один ряд: 2 (только <~380px) / 3 (от ~380px до ~640px) / 4 (максимум).
   // Горизонтального скролла нет — пользователь может посмотреть всех через кнопку "Все питомцы".
   const sortedPets = [...pets].sort((a, b) => {
     const aHasTask = events.some((e: any) => e.pet_id === a.id && !e.is_completed);
@@ -220,7 +214,6 @@ const Dashboard = () => {
      try {
       const formData = new FormData();
       formData.append('name', updatedPet.name);
-      // Always send age (even if 0 or null) so backend can clear it. Use empty string for null.
       formData.append('age', updatedPet.age != null ? String(updatedPet.age) : '');
       
       if (updatedPet.photo instanceof File) {
@@ -288,9 +281,6 @@ const Dashboard = () => {
                   onClick={() => handlePetClick(pet)}
                   className="group bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-lg hover:bg-gray-100 transition-all cursor-pointer border border-gray-100 flex flex-col"
                 >
-                  {/* Аватарка питомца — крупная, во всю ширину верха карточки.
-                      Чтобы карточки были более вертикально прямоугольными (особенно на lg/xl где шире),
-                      фото выше. Нижние края очень сильно скруглены (большой rounded-b), для овальной формы снизу. */}
                   <div className="w-full h-36 sm:h-40 md:h-44 lg:h-52 xl:h-56 overflow-hidden rounded-b-[4rem] sm:rounded-b-[4.5rem] md:rounded-b-[5rem] lg:rounded-b-[6rem] xl:rounded-b-[6.5rem]">
                     <img 
                       src={pet.photo_url || "/images/Cat_and_dog.png"} 
@@ -369,11 +359,6 @@ const Dashboard = () => {
             </Link>
           </div>
 
-          {/* Ближайшие задачи 
-              - На мобильных и планшетах (до lg) — всегда в столбик (как в мобильном макете)
-              - Только на десктопе (lg+) переходят в 3 колонки
-              - На десктопе карточки в строке всегда одинаковой высоты (подстраиваются под самую высокую)
-          */}
           <div className="space-y-3 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
             {upcomingTasks.length > 0 ? (
               upcomingTasks.map((task: any) => {
@@ -583,7 +568,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Decorative cat face (from design/Исправления/Котик.png) - subtle background pattern */}
       <div 
         className="fixed bottom-20 right-0 lg:bottom-0 z-[70] pointer-events-none select-none"
         style={{ filter: 'blur(8px)' }}

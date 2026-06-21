@@ -77,8 +77,7 @@ private function sendReminder($event, &$sent)
             ];
 
             $color = $categoryColors[$category] ?? '#6F6F6F';
-
-            // Title: категория цветная и жирная
+            
             $title = 'Напоминание: <strong style="color:' . $color . '">' . $category . '</strong> для <strong>' . $petName . '</strong>';
 
             $bodyLines = [
@@ -86,8 +85,7 @@ private function sendReminder($event, &$sent)
             ];
 
             $eventTitle = trim((string) ($event->title ?? ''));
-            if ($eventTitle !== '') {
-                // Название задачи — чуть меньше и с прозрачностью
+            if ($eventTitle !== '') {                
                 $bodyLines[] = '<span style="font-size:13px; opacity:0.85;">Название: ' . $eventTitle . '</span>';
             }
 

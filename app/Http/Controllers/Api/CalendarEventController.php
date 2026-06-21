@@ -21,10 +21,7 @@ class CalendarEventController extends Controller
                 ->get()
         );
     }
-
-    /**
- * Получить все события пользователя (для всех питомцев)
- */
+    
     public function indexAll()
     {
         $userId = auth()->id();
@@ -73,14 +70,12 @@ class CalendarEventController extends Controller
             } else {
                 $validated['end_at'] = $start->copy()->addHour();
             }
-        } elseif ($isAllDay) {
-            // Даже если end_at пришёл явно — для all-day принудительно нормализуем (по требованию пользователя)
+        } elseif ($isAllDay) {            
             $start = \Carbon\Carbon::parse($validated['start_at']);
             $validated['end_at'] = $start->copy()->startOfDay()->addDay();
         }
 
-        // КРИТИЧЕСКИ ВАЖНО: если пользователь выбрал повтор — явно включаем флаг is_recurring.
-        // Раньше флаг никогда не выставлялся из фронтенда → все проверки в complete() и команде проваливались.
+        // КРИТИЧЕСКИ ВАЖНО: если пользователь выбрал повтор — явно включаем флаг is_recurring.        
         $recurrenceRule = $validated['recurrence_rule'] ?? null;
         $isRecurring = !empty($recurrenceRule) && $recurrenceRule !== 'none';
 
@@ -95,13 +90,7 @@ class CalendarEventController extends Controller
             'completed_at' => $request->input('completed_at'),
             'reminder_minutes' => $request->input('reminder_minutes'),
         ]);
-        /*
-        // === ОТПРАВКА УВЕДОМЛЕНИЯ ===
-        if (!empty($validated['reminder_minutes']) && $validated['reminder_minutes'] > 0) {
-            $user = auth()->user();
-            $user->notify(new \App\Notifications\PetReminderNotification($event));
-        }  
-        */     
+           
         return response()->json($event->load('pet'), 201);
     }
 
@@ -129,8 +118,7 @@ class CalendarEventController extends Controller
             'is_medical' => 'boolean',
             'pet_id' => 'sometimes|integer|exists:pets,id',
         ]);
-
-        // Если меняется питомец — проверяем права на новый питомец (и разрешаем перенос события)
+        
         if (array_key_exists('pet_id', $validated) && (int)$validated['pet_id'] !== $event->pet_id) {
             $newPet = Pet::findOrFail($validated['pet_id']);
             $this->authorize('update', $newPet);
@@ -139,14 +127,9 @@ class CalendarEventController extends Controller
         $isMedical = in_array($validated['event_type'] ?? $event->event_type, ['Лекарство', 'Ветеринар', 'Укол'])
             ? true
             : ($validated['is_medical'] ?? $event->is_medical);
-
-        // Вычисляем финальное значение is_all_day (учитывая возможный toggle в этом запросе)
+        
         $isAllDay = $request->boolean('is_all_day', $event->is_all_day);
-
-        // === КЛЮЧЕВАЯ ЛОГИКА: сохранение длительности при смене start_at ===
-        // Если пользователь изменил время начала, но не передал явно новый end_at,
-        // мы должны пересчитать end_at, чтобы длительность задачи осталась прежней.
-        // Для all-day — всегда принудительно ставим "следующий день 00:00".
+        
         $dataToUpdate = $validated;
 
         $startAtChanged = array_key_exists('start_at', $validated);
@@ -157,18 +140,12 @@ class CalendarEventController extends Controller
 
             if ($isAllDay) {
                 $dataToUpdate['end_at'] = $newStart->copy()->startOfDay()->addDay();
-            } else {
-                // При переходе из all-day в обычную timed-задачу (снята галочка "На весь день")
-                // НЕЛЬЗЯ использовать старую длительность all-day (~1440 мин).
-                // Сбрасываем на дефолт 60 минут (как при создании обычной задачи).
-                $duration = $event->is_all_day ? 60 : $event->getDurationInMinutes();
-                // Вычисляем новый end_at на основе (возможно сброшенной) длительности
+            } else {                
+                $duration = $event->is_all_day ? 60 : $event->getDurationInMinutes();                
                 $dataToUpdate['end_at'] = $newStart->copy()->addMinutes($duration);
             }
         }
-
-        // Если итоговое состояние задачи — all-day, гарантируем правильный end_at
-        // (покрывает: смена даты + просто переключение чекбокса + случай, когда end_at был отправлен явно).
+        
         if ($isAllDay) {
             $startForEnd = isset($dataToUpdate['start_at'])
                 ? \Carbon\Carbon::parse($dataToUpdate['start_at'])
@@ -176,10 +153,7 @@ class CalendarEventController extends Controller
 
             $dataToUpdate['end_at'] = $startForEnd->copy()->startOfDay()->addDay();
         }
-
-        // КРИТИЧЕСКИ ВАЖНО: при редактировании тоже явно вычисляем is_recurring,
-        // иначе при добавлении повтора через редактирование флаг остаётся false
-        // и createNextOccurrence() не создаёт следующую задачу.
+        // КРИТИЧЕСКИ ВАЖНО: при редактировании явно вычисляем is_recurring,        
         $recurrenceRule = $validated['recurrence_rule'] ?? $event->recurrence_rule;
 
         $isRecurring = !empty($recurrenceRule) && $recurrenceRule !== 'none';
@@ -188,17 +162,13 @@ class CalendarEventController extends Controller
             ...$dataToUpdate,
             'is_recurring' => $isRecurring,
             'is_medical' => $isMedical,
-            'is_all_day' => $isAllDay,
-            // Важно: используем has(), чтобы отличать "пользователь явно выбрал 'Без напоминания'" (прислал ключ, значение null)
-            // от "ключ не был прислан" (оставляем старое значение).
+            'is_all_day' => $isAllDay,            
             'reminder_minutes' => $request->has('reminder_minutes')
                 ? $request->input('reminder_minutes')
                 : $event->reminder_minutes,
             'reminder_sent_at' => $request->has('reminder_minutes') ? null : $event->reminder_sent_at,
         ]);
-
-        // Дублирующий сброс на случай, если в будущем логика изменится.
-        // Сбрасываем флаг отправки напоминания при любом явном изменении поля (в т.ч. при установке null).
+        
         if ($request->has('reminder_minutes')) {
             $event->update(['reminder_sent_at' => null]);
         }        

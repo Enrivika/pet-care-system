@@ -10,13 +10,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 
-# Copy only what's needed for build to leverage cache better
 COPY . .
 
-# For production build on same-origin (SPA + API on one service):
-# The JS code (axios.ts) defaults to '/api' if VITE_API_URL is not provided.
-# If you ever need a full cross-origin URL at build time, pass build arg:
-#   docker build --build-arg VITE_API_URL=https://your-app.onrender.com/api ...
 ARG VITE_API_URL
 RUN if [ -n "$VITE_API_URL" ]; then echo "VITE_API_URL=$VITE_API_URL" > .env.production; fi
 
@@ -71,6 +66,4 @@ RUN chmod +x /usr/local/bin/entrypoint
 
 ENTRYPOINT ["entrypoint"]
 
-# Render will use the $PORT env var (usually 10000). We bind dynamically in entrypoint.
-# EXPOSE is just documentation.
 EXPOSE 8000

@@ -49,7 +49,6 @@ public function toMail($notifiable)
         ->line('Напоминаем о задаче для питомца **' . $this->event->pet->name . '**!')
         ->line('Категория: **' . $this->event->event_type . '**');
 
-    // Название: показываем только если оно есть
     $title = trim((string) ($this->event->title ?? ''));
     if ($title !== '') {
         $mail->line('Название: **' . $title . '**');

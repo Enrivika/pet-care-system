@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('pet_id')->constrained('pets')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->string('action_type');           // fed, walked, gave_medicine, cleaned_litter, etc.
+            $table->string('action_type');           
             $table->text('notes')->nullable();
             $table->timestamp('performed_at')->useCurrent();
             $table->timestamps();

@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('pet_id')->constrained('pets')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->string('category');              // food, vet, grooming, toys, medicine, other
+            $table->string('category');              
             $table->decimal('amount', 10, 2);
             $table->date('expense_date');
             $table->text('description')->nullable();

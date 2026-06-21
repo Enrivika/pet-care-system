@@ -1,6 +1,3 @@
-// Единый источник правды для категорий задач Petopia
-// Цвета строго по Design.txt и реализации на страницах (Calendar, Dashboard, HealthRecords)
-
 export interface Category {
   name: string;
   color: string;
@@ -28,5 +25,4 @@ export const getCategoryColor = (type: string): string => {
   return found ? found.color : '#6F6F6F';
 };
 
-// Удобный массив имён (для select/валидаций при необходимости)
 export const CATEGORY_NAMES = CATEGORIES.map((c) => c.name);

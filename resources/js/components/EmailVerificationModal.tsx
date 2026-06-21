@@ -40,7 +40,6 @@ const EmailVerificationModal = ({
     }
   }, [isOpen, debugCode]);
 
-  // Reset state when modal opens/closes + start timer
   useEffect(() => {
     if (!isOpen) {
       resetForm();
@@ -56,10 +55,8 @@ const EmailVerificationModal = ({
         timerRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // Close by ESC (как в ForgotPasswordModal)
   useEffect(() => {
     if (!isOpen) return;
 
@@ -69,7 +66,6 @@ const EmailVerificationModal = ({
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const resetForm = () => {

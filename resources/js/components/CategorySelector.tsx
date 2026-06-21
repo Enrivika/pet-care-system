@@ -9,7 +9,7 @@ interface CategorySelectorProps {
   isMedical?: boolean;
   onIsMedicalChange?: (value: boolean) => void;
   showMedicalCheckbox?: boolean; // показывать чекбокс только когда выбрано "Другое"
-  categoriesOverride?: CategoryItem[]; // ← NEW: если передан — используем его вместо CATEGORIES
+  categoriesOverride?: CategoryItem[];
 }
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({

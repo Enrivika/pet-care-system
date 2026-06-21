@@ -75,7 +75,6 @@ const Pets = () => {
     try {
       const formData = new FormData();
       formData.append('name', petName);
-      // send even if 0
       formData.append('age', petAge || '');
       if (petPhoto) formData.append('photo', petPhoto);
 
@@ -104,7 +103,6 @@ const Pets = () => {
     try {
       const formData = new FormData();
       formData.append('name', updatedPet.name);
-      // Always send age (even if 0 or null) so backend can clear it. Use empty string for null.
       formData.append('age', updatedPet.age != null ? String(updatedPet.age) : '');
 
       if (updatedPet.photo instanceof File) {

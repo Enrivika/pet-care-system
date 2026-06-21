@@ -96,7 +96,7 @@ const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({ show, onC
           </button>
         </div>
 
-        {/* Скроллируемая область списка (flex-1 между табами и прилипшей кнопкой) */}
+        {/* Скроллируемая область списка */}
         <div className="flex-1 min-h-0 overflow-y-auto">
           {loading ? (
             <div className="p-8 text-center text-gray-500">Загрузка...</div>

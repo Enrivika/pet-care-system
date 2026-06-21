@@ -10,8 +10,7 @@ class Pet extends Model
     protected $fillable = [
         'owner_id', 'name', 'species', 'breed', 'birth_date', 'photo_url', 'weight', 'notes'
     ];
-
-    // Автоматически добавляет поле age при возврате JSON
+    
     protected $appends = ['age'];
 
     public function getAgeAttribute()

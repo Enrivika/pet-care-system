@@ -37,7 +37,7 @@
             </div>
 
             <p class="mt-12 text-sm text-zinc-500">
-                Этап 4.1 — Окружение разработки готово • Laravel 11 + React + Tailwind
+                Laravel 11 + React + Tailwind
             </p>
         </div>
     </div>

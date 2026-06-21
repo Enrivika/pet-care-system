@@ -83,14 +83,11 @@ const Topbar = ({ onOpenProfile }: TopbarProps) => {
 
     try {
       await dispatch(deleteNotification(id) as any).unwrap();
-      // Можно добавить toast, но для быстроты — без него (как с markAsRead)
     } catch (err) {
       toast.error('Не удалось удалить уведомление');
     }
   };
 
-  // Рендерер только вкладок + скроллируемого списка уведомлений
-  // (кнопки действий рендерятся отдельно снаружи, чтобы всегда прилипали к низу)
 const renderNotificationsContent = () => (
   <>
     {/* Вкладки */}
@@ -224,7 +221,6 @@ const renderNotificationsContent = () => (
     </div>
   );
 
-  // Custom SVG icons matching design/icons/ (solid #1F2421 fill, to be identical in both panels)
   const BellIcon = ({ className = "w-7 h-7" }: { className?: string }) => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -255,12 +251,10 @@ const InstallIcon = ({ className = "w-7 h-7" }: { className?: string }) => (
     fill="#1F2421"
     aria-hidden="true"
   >
-    {/* Chunky solid download icon (filled shapes, no strokes) */}
     <path d="M10 3a2 2 0 0 1 4 0v7h2.1a1 1 0 0 1 .7 1.7l-4.1 4.1a1.5 1.5 0 0 1-2.1 0l-4.1-4.1A1 1 0 0 1 7.2 10H10V3zM6 14a2 2 0 0 1 2 2v2h8v-2a2 2 0 1 1 4 0v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2z" />
   </svg>
 );
 
-// ====== Responsive UI tokens (bell button / badge / panel) ======
   const bellBtnBase =
     "bg-white rounded-full flex items-center justify-center shadow-sm hover:opacity-80 active:scale-[0.95] transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2";
 
@@ -300,7 +294,7 @@ const InstallIcon = ({ className = "w-7 h-7" }: { className?: string }) => (
 
         {/* Иконки справа */}
         <div className="flex items-center gap-1 sm:gap-2">
-          {/* Кнопка установки PWA (мобильная) — ПЕРЕНЕСЕНА ЛЕВЕЕ КОЛОКОЛЬЧИКА */}
+          {/* Кнопка установки PWA (мобильная) */}
           {canInstall && (
             <button
               onClick={promptInstall}
@@ -398,7 +392,7 @@ const InstallIcon = ({ className = "w-7 h-7" }: { className?: string }) => (
       <div className="hidden lg:block bg-[#E9F5ED] sticky top-0 z-[50]">
         <div className="px-8 xl:px-10 2xl:px-12 py-6 xl:py-7 2xl:py-8 flex items-center justify-end">
           <div className="flex items-center gap-2 xl:gap-3">
-            {/* Кнопка установки PWA (десктоп) — ПЕРЕНЕСЕНА ЛЕВЕЕ КОЛОКОЛЬЧИКА */}
+            {/* Кнопка установки PWA (десктоп) */}
             {canInstall && (
               <button
                 onClick={promptInstall}

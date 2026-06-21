@@ -220,11 +220,6 @@ const ViewTaskModal = ({ isOpen, onClose, task, onEdit }: ViewTaskModalProps) =>
                 Закрыть
               </button>
             </div>
-
-            {/* (Если тебе нужен delete confirm отсюда) */}
-            {/* Пример кнопки открытия подтверждения:
-                <button onClick={() => setShowDeleteConfirm(true)}>Удалить</button>
-            */}
           </div>
         </div>
       </div>

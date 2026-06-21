@@ -11,9 +11,6 @@ export async function subscribeToPush(): Promise<boolean> {
   }
 
   try {
-    // Получаем регистрацию SW без слепого await ready (который может зависнуть навсегда,
-    // если SW не зарегистрирован — типичная ситуация на localhost при запуске через Laragon
-    // без правильного dev/prod детекта, или после билда).
     let registration = await navigator.serviceWorker.getRegistration();
 
     // Если нет регистрации, НЕ ждём ready (может зависнуть). Даём понятную ошибку.

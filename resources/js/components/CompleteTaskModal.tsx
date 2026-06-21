@@ -241,7 +241,7 @@ const CompleteTaskModal = ({ isOpen, onClose, task }: CompleteTaskModalProps) =>
             </div>
           </div>
 
-          {/* Кнопки (делаем “липкими” к низу контейнера, чтобы на телефоне всегда были под рукой) */}
+          {/* Кнопки */}
           <div className="px-4 pb-4 min-[380px]:px-5 sm:px-8 sm:pb-7 flex gap-3 bg-white">
             <button
               onClick={handleClose}

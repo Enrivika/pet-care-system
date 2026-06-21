@@ -64,8 +64,7 @@ class EmailVerificationService
             'expires_at' => now()->addMinutes(self::EXPIRATION_MINUTES),
         ];
 
-        if ($type === 'registration' && !empty($registrationData)) {
-            // Если пароль уже захеширован (из previous), не хешируем повторно
+        if ($type === 'registration' && !empty($registrationData)) {            
             $isAlreadyHashed = isset($registrationData['password']) && str_starts_with($registrationData['password'], '$2y$');
             $data['name'] = $registrationData['name'];
             $data['password'] = $isAlreadyHashed
@@ -102,9 +101,7 @@ class EmailVerificationService
                     }
                 );
             } catch (\Exception $mailException) {
-                // Важно: удаляем запись, чтобы неудачная отправка почты
-                // не расходовала лимит попыток (rate limit).
-                // Gmail плохо работает с Render — мы перешли на Resend.
+                
                 $verification->delete();
 
                 throw new \Exception(
@@ -114,8 +111,7 @@ class EmailVerificationService
                 );
             }
         }
-
-        // Возвращаем plain code только в debug-режиме (для фронтенда на Render)
+        
         return $isDebug ? $code : null;
     }
 
@@ -143,8 +139,6 @@ class EmailVerificationService
                 throw new \Exception('Данные для регистрации не найдены или повреждены. Пожалуйста, начните регистрацию заново.');
             }
 
-            // Create the real user now
-            // Уведомления по умолчанию ВЫКЛЮЧЕНЫ — пользователь включит их сам в профиле
             $user = User::create([
                 'name'               => $verification->name,
                 'email'              => $verification->email,
@@ -160,13 +154,8 @@ class EmailVerificationService
             $result['user'] = $user;
             $result['token'] = $token;
 
-        } else {
-            // email_change
-            $user = User::findOrFail($verification->user_id);
-
-            // Раньше здесь была дополнительная проверка владельца через auth().
-            // По просьбе пользователя убрана (чтобы не было проблем с 401 и принудительным выходом).
-            // Верификация кода на новый email сама по себе является доказательством контроля.
+        } else {            
+            $user = User::findOrFail($verification->user_id);          
 
             $user->update([
                 'email' => $email,

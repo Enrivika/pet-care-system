@@ -86,8 +86,7 @@ class PetController extends Controller
             $data['name'] = $request->name;
         }
 
-        // Возраст → birth_date
-        // Поддерживаем очистку возраста (пустая строка / 0 / null)
+        // Возраст       
         if ($request->has('age')) {
             $age = $request->input('age');
             if ($age === '' || $age === null || $age == 0) {

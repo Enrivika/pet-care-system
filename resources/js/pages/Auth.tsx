@@ -113,8 +113,6 @@ const Auth = () => {
   // Called after successful email verification during registration
   const handleRegistrationVerificationSuccess = (data: any) => {
     if (data.user && data.token) {
-      // Use dedicated action instead of calling login thunk again.
-      // The verification response already contains a valid token.
       dispatch(setAuthAfterVerification({ 
         user: data.user, 
         token: data.token 

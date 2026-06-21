@@ -13,11 +13,11 @@ return new class extends Migration
             $table->foreignId('pet_id')->constrained('pets')->cascadeOnDelete();
             $table->foreignId('created_by')->constrained('users')->cascadeOnDelete();
             $table->string('title');
-            $table->string('event_type');           // feeding, walk, vet, grooming, medication, etc.
+            $table->string('event_type');           
             $table->dateTime('start_at');
             $table->dateTime('end_at')->nullable();
             $table->boolean('is_recurring')->default(false);
-            $table->string('recurrence_rule')->nullable(); // daily, weekly, monthly
+            $table->string('recurrence_rule')->nullable(); 
             $table->integer('reminder_minutes')->default(30);
             $table->boolean('is_completed')->default(false);
             $table->timestamps();

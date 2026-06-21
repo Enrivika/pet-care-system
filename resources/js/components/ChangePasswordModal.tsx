@@ -18,7 +18,6 @@ const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProps) => {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Reset state when modal opens
   useEffect(() => {
     if (!isOpen) return;
 
@@ -31,7 +30,6 @@ const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProps) => {
     setLoading(false);
   }, [isOpen]);
 
-  // Close by ESC (как в других модалках)
   useEffect(() => {
     if (!isOpen) return;
 
@@ -41,7 +39,6 @@ const ChangePasswordModal = ({ isOpen, onClose }: ChangePasswordModalProps) => {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
